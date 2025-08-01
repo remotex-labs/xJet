@@ -69,7 +69,7 @@
         "@swc/jest": "^0.2.37",
         "@types/node": "^22.14.0",
         "@types/jest": "^29.5.14",
-        "@remotex-labs/xbuild": "^1.5.8"
+        "@remotex-labs/xbuild": "^1.5.10"
     },
     "dependencies": {
         "yargs": "^17.7.2",
