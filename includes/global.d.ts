@@ -24,6 +24,18 @@ declare global {
     declare var NO_COLOR: true | undefined;
 
     /**
+     * If true, include both xJet internal and native stack traces in error output.
+     *
+     * @remarks
+     * - When `false`, stack traces are minimized to user code only.
+     * - When `true`, full stack traces are printed, including internal frames.
+     *
+     * @since 1.0.0
+     */
+
+    declare var VERBOSE: boolean;
+
+    /**
      * Package version
      */
 
