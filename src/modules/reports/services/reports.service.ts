@@ -30,7 +30,7 @@ import { transpileFile } from '@services/transpiler.service';
 import { JsonReporter } from '@reports/reporter/json.reporter';
 import { JunitReporter } from '@reports/reporter/junit.reporter';
 import { ConsoleReporter } from '@reports/reporter/console.reporter';
-import { LogLevel } from '@reports/abstract/constants/report.constant';
+import { LogLevel } from '@reports/constants/report.constant';
 
 /**
  * Transpiles a reporter file into a CommonJS module.

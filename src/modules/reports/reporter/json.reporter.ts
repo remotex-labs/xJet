@@ -2,9 +2,9 @@
  * Import will remove at compile time
  */
 
+import type { RunnerInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { JsonTestInterface } from '@reports/reporter/interfaces/json-reporter.interface';
 import type { DescribeEndInterface } from '@reports/abstract/interfaces/report-abstract.interface';
-import type { LogInterface, RunnerInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { DescribableInterface, TestEndInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { SuiteEndInterface, SuiteStartInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { JsonDescribeInterface, JsonSuiteInterface } from '@reports/reporter/interfaces/json-reporter.interface';
@@ -20,7 +20,7 @@ import { AbstractReporter } from '@reports/abstract/report.abstract';
  * JSON reporter for test execution results.
  *
  * @remarks
- * Collects suites, describes, tests, logs, and errors, and outputs the results
+ * Collects suites, describes, tests, and errors, and outputs the results
  * as a JSON object at the end of test execution.
  *
  * @since 1.0.0
@@ -34,24 +34,6 @@ export class JsonReporter extends AbstractReporter {
      */
 
     protected testResults: Record<string, Record<string, JsonSuiteInterface>> = {};
-
-    /**
-     * Records a `log` entry for the appropriate test or describe block.
-     *
-     * @param log - The log entry to record
-     *
-     * @see LogInterface
-     * @since 1.0.0
-     */
-
-    log(log: LogInterface): void {
-        const suite = this.getSuite(log.runner, log.suiteName);
-        const parent = this.findParentDescribe(suite, log.ancestry);
-        if (!parent) return;
-
-        parent.logs = parent.logs ?? [];
-        parent.logs.push(log.message);
-    }
 
     /**
      * Initializes a `suite` at the start of test execution.
@@ -155,7 +137,7 @@ export class JsonReporter extends AbstractReporter {
     }
 
     /**
-     * Records the end of a `test`, including logs, errors, and status flags.
+     * Records the end of a `test`, including errors, and status flags.
      *
      * @param event - Test end event information
      *
@@ -170,7 +152,6 @@ export class JsonReporter extends AbstractReporter {
         if (!parent) return;
 
         const testJson: JsonTestInterface = {
-            logs: [],
             todo: event.todo,
             passed: event.passed,
             errors: event.errors ?? [],

@@ -2,7 +2,7 @@
  * Import will remove at compile time
  */
 
-import type { LogLevel } from '@reports/abstract/constants/report.constant';
+import type { LogLevel } from '@reports/constants/report.constant';
 import type { RunnerInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { DescribeEndInterface, LogInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { SuiteStartInterface, TestEndInterface } from '@reports/abstract/interfaces/report-abstract.interface';

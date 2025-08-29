@@ -2,9 +2,8 @@
  * Import will remove at compile time
  */
 
-import type { LogLevel } from '@reports/abstract/constants/report.constant';
-import type { TestEndInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { SuiteDisplayInterface } from '@reports/reporter/interfaces/console-reporter.interface';
+import type { LogInterface, TestEndInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { RunnerInterface, SuiteEndInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 import type { DescribeEndInterface, SuiteStartInterface } from '@reports/abstract/interfaces/report-abstract.interface';
 
@@ -16,7 +15,8 @@ import { xterm } from '@remotex-labs/xansi/xterm.component';
 import { ANSI, writeRaw } from '@remotex-labs/xansi/ansi.component';
 import { ShadowRenderer } from '@remotex-labs/xansi/shadow.service';
 import { AbstractReporter } from '@reports/abstract/report.abstract';
-import { ConsolePrefixStatus } from '@reports/abstract/constants/console.constant';
+import { LogLevel } from '@reports/constants/report.constant';
+import { ConsolePrefixStatus } from '@reports/constants/console.constant';
 
 /**
  *
@@ -56,6 +56,20 @@ export class ConsoleReporter extends AbstractReporter {
 
                 this.suiteOrder.push(key);
             }
+        }
+
+        this.renderSuites();
+    }
+
+    log(log: LogInterface): void {
+        if (log.level < this.logLevel || this.logLevel === LogLevel.SILENT) return;
+
+        const suite = this.ensureSuite(log.runner, log.suiteName);
+
+        // Split message by newlines and push each line individually
+        const lines = log.message.split(/\r?\n/);
+        for (const line of lines) {
+            suite.details.push(xterm.dim(line));
         }
 
         this.renderSuites();
@@ -117,6 +131,11 @@ export class ConsoleReporter extends AbstractReporter {
         }
 
         this.renderSuites();
+    }
+
+    finish(): void {
+        this.renderer.clearScreen();
+        this.renderer.flushToTerminal();
     }
 
     private getSuiteKey(runner: RunnerInterface, suiteName: string): string {

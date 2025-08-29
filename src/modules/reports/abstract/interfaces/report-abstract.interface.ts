@@ -2,8 +2,8 @@
  * Import will remove at compile time
  */
 
+import type { LogLevel } from '@reports/constants/report.constant';
 import type { AbstractReporter } from '@reports/abstract/report.abstract';
-import type { LogLevel } from '@reports/abstract/constants/report.constant';
 
 /**
  * Represents the location of an invocation in a source file.
@@ -89,7 +89,6 @@ export interface SuiteStartInterface {
  */
 
 export interface DescribableInterface extends SuiteStartInterface {
-    skipped?: boolean;
     ancestry: Array<string>;
     description: string;
 }
@@ -157,8 +156,9 @@ export interface SuiteEndInterface extends SuiteStartInterface {
  * @since 1.0.0
  */
 
-export interface DescribeEndInterface extends SuiteStartInterface, DescribableInterface {
+export interface DescribeEndInterface extends DescribableInterface {
     errors?: Array<ErrorEventInterface>;
+    skipped?: boolean;
     duration: number;
 }
 
@@ -177,10 +177,11 @@ export interface DescribeEndInterface extends SuiteStartInterface, DescribableIn
  * @see ErrorEventInterface
  * @see SuiteStartInterface
  * @see DescribableInterface
+ *
  * @since 1.0.0
  */
 
-export interface TestEndInterface extends SuiteStartInterface, DescribableInterface {
+export interface TestEndInterface extends DescribableInterface {
     todo?: boolean;
     errors?: Array<ErrorEventInterface>;
     passed: boolean;

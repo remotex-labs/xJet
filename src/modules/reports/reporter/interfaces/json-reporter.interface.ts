@@ -29,7 +29,6 @@ export interface EventTimestampInterface {
  * errors, timestamps, and metadata about its position within the test suite hierarchy.
  *
  * @property todo - Optional flag indicating that the test is marked as TODO
- * @property logs - Optional array of log messages associated with the test
  * @property errors - Optional array of errors encountered during the test
  * @property passed - Optional flag indicating whether the test passed
  * @property skipped - Optional flag indicating whether the test was skipped
@@ -44,7 +43,6 @@ export interface EventTimestampInterface {
 
 export interface JsonTestInterface extends EventTimestampInterface {
     todo?: boolean;
-    logs?: Array<string>;
     errors?: Array<ErrorEventInterface>;
     passed?: boolean;
     skipped?: boolean;
@@ -53,17 +51,16 @@ export interface JsonTestInterface extends EventTimestampInterface {
 }
 
 /**
- * Represents a describe block in a JSON reporter output.
+ * Represents a `describe` block in a JSON reporter output.
  *
  * @remarks
- * This interface is used to serialize a describe block, including its child tests,
+ * This interface is used to serialize a `describe` block, including its child tests,
  * nested describes, logs, errors, timestamps, and metadata about its position in the test suite hierarchy.
  *
- * @property logs - Optional array of log messages associated with this describe block
  * @property tests - Array of tests contained within this describe block
  * @property errors - Optional array of errors encountered within this describe block
  * @property ancestry - Array of parent descriptions leading to this describe block
- * @property skipped - Optional flag indicating whether the describe block was skipped
+ * @property skipped - Optional flag indicating whether the `describe` block was skipped
  * @property description - Description of the describe block
  * @property describes - Array of nested describe blocks
  *
@@ -74,7 +71,6 @@ export interface JsonTestInterface extends EventTimestampInterface {
  */
 
 export interface JsonDescribeInterface extends EventTimestampInterface {
-    logs?: Array<string>;
     tests: Array<JsonTestInterface>;
     errors?: Array<ErrorEventInterface>;
     ancestry: Array<string>;
@@ -89,7 +85,7 @@ export interface JsonDescribeInterface extends EventTimestampInterface {
  * @remarks
  * Extends {@link EventTimestampInterface} to track start time, end time, and duration.
  * Includes the runner information, errors, and the root describe block. Used to serialize
- * the results of an entire test suite, including nested describes and tests.
+ * the results of an entire test suite, including nested `describes` and tests.
  *
  * @property runner - The runner executing this suite
  * @property suiteName - Name of the test suite associated with the runner
