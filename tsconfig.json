@@ -38,6 +38,9 @@
             "@reports/*": [
                 "src/modules/reports/*"
             ],
+            "@packets/*": [
+                "src/modules/packets/*"
+            ],
             "@symlinks/*": [
                 "src/modules/symlinks/*"
             ],
