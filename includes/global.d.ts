@@ -40,6 +40,45 @@ declare global {
      */
 
     declare const __VERSION: string;
+
+    /**
+     * Dispatch message result from the test runner
+     */
+
+    declare function dispatch(data: Buffer): void;
+
+    /**
+     * Global type declarations for xJet runtime.
+     *
+     * @remarks
+     * The `__XJET` namespace provides runtime identifiers used internally by xJet.
+     *
+     * @since 1.0.0
+     */
+
+    namespace __XJET {
+        /**
+         * Unique identifier of the currently running test suite.
+         *
+         * @remarks
+         * Automatically set by the xJet test runner at runtime.
+         *
+         * @since 1.0.0
+         */
+
+        declare const suiteId: string;
+
+        /**
+         * Unique identifier of the runner executing the tests.
+         *
+         * @remarks
+         * Automatically set by the xJet test runner at runtime.
+         *
+         * @since 1.0.0
+         */
+
+        declare const runnerId: string;
+    }
 }
 
 export {};
