@@ -1,0 +1,329 @@
+/**
+ * Import will remove at compile time
+ */
+
+import type { DecodedPacketType } from '@packets/packets.module';
+import type { FunctionLikeType, FunctionType } from '@remotex-labs/xjet-expect';
+import type { RunningSuitesInterface } from '@target/interfaces/traget.interface';
+import type { TranspileFileType } from '@services/interfaces/transpiler-service.interface';
+import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
+
+/**
+ * Imports
+ */
+
+import EventEmitter from 'events';
+import { xJetError } from '@errors/xjet.error';
+import { decodePacket } from '@packets/packets.module';
+import { QueueService } from '@services/queue.service';
+import { inject } from '@symlinks/services/inject.service';
+import { FrameworkService } from '@services/framework.service';
+import { PacketKind } from '@packets/constants/packet-schema.constants';
+
+/**
+ * Abstract Target class for all xJet execution targets.
+ *
+ * @remarks
+ * A `AbstractTarget` defines the core lifecycle and event-handling logic
+ * used by concrete target implementations (e.g., local, remote, or distributed).
+ * It manages suites, event dispatching, and lifecycle completion.
+ *
+ * @since 1.0.0
+ */
+
+export abstract class AbstractTarget {
+    /**
+     * Registry of loaded test suites keyed by suite identifier.
+     * @since 1.0.0
+     */
+
+    readonly suites: Map<string, string> = new Map();
+
+    /**
+     * Queue service responsible for scheduling and executing tasks.
+     * @since 1.0.0
+     */
+
+    protected readonly queue: QueueService;
+
+    /**
+     * Tracks the currently running test suites and their associated promises.
+     * @since 1.0.0
+     */
+
+    protected readonly runningSuites: Map<string, RunningSuitesInterface> = new Map();
+
+    /**
+     * Event emitter used for handling log, error, status, and event packets.
+     * @since 1.0.0
+     */
+
+    protected readonly eventEmitter = new EventEmitter();
+
+    /**
+     * Creates a new runner service instance.
+     *
+     * @param config - The runtime configuration for the runner.
+     *
+     * @remarks
+     * The {@link FrameworkService} is injected automatically and does not need
+     * to be passed manually. The constructor initializes the {@link QueueService}
+     * with the parallelism level defined in the configuration.
+     *
+     * @since 1.0.0
+     */
+
+    protected readonly framework: FrameworkService = inject(FrameworkService);
+
+    /**
+     * Initializes a new {@link AbstractTarget} instance.
+     *
+     * @param config - The runtime configuration that controls execution behavior,
+     * such as parallelism and bail mode.
+     *
+     * @remarks
+     * The constructor sets up the internal {@link QueueService} based on the
+     * configured parallelism level. Other dependencies (e.g., {@link FrameworkService})
+     * are injected automatically and not passed here.
+     *
+     * @since 1.0.0
+     */
+
+    constructor(protected config: ConfigurationInterface) {
+        this.queue = new QueueService(this.config.parallel);
+    }
+
+    /**
+     * Returns the number of currently active tasks in the queue.
+     * @since 1.0.0
+     */
+
+    get numberActiveTask(): number {
+        return this.queue.size;
+    }
+
+    /**
+     * Initializes the target environment.
+     *
+     * @remarks
+     * Implemented by subclasses to configure resources before execution.
+     *
+     * @since 1.0.0
+     */
+
+    abstract initTarget(): Promise<void>;
+
+    /**
+     * Resolves a human-readable runner name for a given runner identifier.
+     *
+     * @param runnerId - Identifier of the runner
+     *
+     * @since 1.0.0
+     */
+
+    abstract getRunnerName(runnerId: string): string;
+
+    /**
+     * Executes the given test suites.
+     *
+     * @param suites - Transpiled test suite files
+     * @param watchMode - Whether the runner should operate in watch mode
+     *
+     * @since 1.0.0
+     */
+
+    abstract executeSuites(suites: TranspileFileType, watchMode?: boolean): Promise<void>;
+
+    /**
+     * Subscribe to log events emitted during test execution.
+     *
+     * @remarks
+     * These logs correspond to messages like `console.log`, `console.info`, `console.warn`, or `console.error`
+     * generated within tests, describe blocks, or hooks. The listener receives the fully decoded packet
+     * of a type {@link DecodedPacketType | PacketKind.Log}.
+     *
+     * @param key - Must be `'log'`.
+     * @param listener - A handler invoked with the decoded log packet.
+     *
+     * @see DecodedPacketType
+     * @see PacketLogInterface
+     *
+     * @since 1.0.0
+     */
+
+    on(key: 'log', listener: FunctionLikeType<void, [ DecodedPacketType<PacketKind.Log> ]>): this;
+
+    /**
+     * Subscribe to fatal suite error events.
+     *
+     * @remarks
+     * These errors occur at the suite level and are **not** associated with individual tests,
+     * describe blocks, or hooks. The listener receives the fully decoded packet
+     * of a type {@link DecodedPacketType | PacketKind.Error}.
+     *
+     * @param key - Must be `'error'`.
+     * @param listener - A handler invoked with the decoded error packet.
+     *
+     * @see DecodedPacketType
+     * @see PacketErrorInterface
+     *
+     * @since 1.0.0
+     */
+
+    on(key: 'error', listener: FunctionLikeType<void, [ DecodedPacketType<PacketKind.Error> ]>): this;
+
+    /**
+     * Subscribe to test or describe completion events.
+     *
+     * @remarks
+     * These events are emitted when a test or describe block finishes execution.
+     * They do **not** include skipped or TODO tests. The listener receives
+     * the fully decoded packet of type {@link DecodedPacketType | PacketKind.Events}.
+     *
+     * @param key - Must be `'events'`.
+     * @param listener - A handler invoked with the decoded events packet.
+     *
+     * @see DecodedPacketType
+     * @see PacketEventsInterface
+     *
+     * @since 1.0.0
+     */
+
+    on(key: 'events', listener: FunctionLikeType<void, [ DecodedPacketType<PacketKind.Events> ]>): this;
+
+    /**
+     * Subscribe to test or describe status updates.
+     *
+     * @remarks
+     * These events are emitted when a test or describe block starts, is skipped, or marked TODO.
+     * The listener receives the fully decoded packet of type {@link DecodedPacketType | PacketKind.Status}.
+     *
+     * @param key - Must be `'status'`.
+     * @param listener - A handler invoked with the decoded status packet.
+     *
+     * @see DecodedPacketType
+     * @see PacketStatusInterface
+     *
+     * @since 1.0.0
+     */
+
+    on(key: 'status', listener: FunctionLikeType<void, [ DecodedPacketType<PacketKind.Status> ]>): this;
+
+    /**
+     * Generic listener registration.
+     *
+     * @param key - Event name
+     * @param listener - The listener function
+     *
+     * @since 1.0.0
+     */
+
+    on(key: string | symbol, listener: FunctionType): this {
+        this.eventEmitter.on(key, listener);
+
+        return this;
+    }
+
+    /**
+     * Marks a test suite as complete and resolves or rejects its associated promise.
+     *
+     * @remarks
+     * This method is called when a suite finishes execution or encounters a fatal error.
+     * - If `hasError` is `true` and the configuration has `bail` enabled, all remaining tasks in the queue are stopped
+     *   and the suite's promise is rejected.
+     * - Otherwise, the suite's promise is resolved normally.
+     *
+     * After completion, the suite is removed from the `runningSuites` map.
+     *
+     * @param suiteId - The unique identifier of the test suite.
+     * @param hasError - Whether the suite encountered a fatal error. Defaults to `false`.
+     *
+     * @since 1.0.0
+     */
+
+    completeSuite(suiteId: string, hasError = false): void {
+        const suiteContext = this.runningSuites.get(suiteId);
+        if (!suiteContext) {
+            return;
+        }
+
+        this.runningSuites.delete(suiteId);
+        if (hasError && this.config.bail) {
+            this.queue.stop();
+            this.queue.clear();
+            suiteContext.reject();
+        } else {
+            suiteContext.resolve();
+        }
+    }
+
+    /**
+     * Processes a raw packet buffer received from a runner and emits the corresponding event.
+     *
+     * @param buffer - The raw buffer containing the encoded packet.
+     *
+     * @throws xJetError - If the packet belongs to an unregistered suite or has an invalid kind.
+     *
+     * @remarks
+     * The method decodes the packet using the schema defined in {@link PacketSchemas} and routes it
+     * to the appropriate event based on its kind:
+     * - `PacketKind.Log` → emits a `'log'` event
+     * - `PacketKind.Error` → marks the suite as complete with an error and emits an `'error'` event
+     * - `PacketKind.Status` → emits a `'status'` event (for start, skip, or TODO)
+     * - `PacketKind.Events` → emits an `'events'` event (for test/describe end that is not skipped or TODO)
+     *
+     * If the packet's `suiteId` is not registered in the `suites` map, an {@link xJetError} is thrown.
+     * Any unknown `kind` also results in an {@link xJetError}.
+     *
+     * @since 1.0.0
+     */
+
+    protected dispatch(buffer: Buffer): void {
+        const data = decodePacket(buffer);
+        const suitePath = this.suites.get(data.suiteId);
+        if (!suitePath) throw new xJetError(
+            `Runner '${ data.runnerId }' in test suite '${ data.suiteId }' is not registered`
+        );
+
+        switch (data.kind) {
+            case PacketKind.Log:
+                this.eventEmitter.emit('log', data, suitePath);
+                break;
+
+            case PacketKind.Error:
+                this.completeSuite(data.suiteId, true);
+                this.eventEmitter.emit('error', data, suitePath);
+                break;
+
+            case PacketKind.Status:
+                this.eventEmitter.emit('status', data, suitePath);
+                break;
+
+            case PacketKind.Events:
+                this.eventEmitter.emit('events', data, suitePath);
+                break;
+
+            default:
+                const errorMessage = `Invalid schema type '${ data.kind }' detected for runner '${ data.runnerId }' in test suite '${ data.suiteId }'`;
+                throw new xJetError(errorMessage);
+        }
+    }
+
+    /**
+     * Generates a pseudo-random alphanumeric identifier.
+     *
+     * @returns A pseudo-random alphanumeric string.
+     *
+     * @remarks
+     * The ID is composed of two concatenated random strings, each derived from
+     * `Math.random()` and converted to base-36, then truncated to 7 characters.
+     * This method is typically used to create unique identifiers for suites,
+     * runners, or tasks at runtime. Note that the IDs are not cryptographically secure.
+     *
+     * @since 1.0.0
+     */
+
+    protected generateId(): string {
+        return Math.random().toString(36).substring(2, 9) + Math.random().toString(36).substring(2, 9);
+    }
+}
