@@ -57,7 +57,7 @@
         "docs:preview": "vitepress preview docs"
     },
     "devDependencies": {
-        "jest": "^30.0.5",
+        "jest": "^30.1.2",
         "eslint": "^9.34.0",
         "vitepress": "^1.6.4",
         "typescript-eslint": "^8.41.0",
