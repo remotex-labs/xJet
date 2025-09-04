@@ -58,26 +58,16 @@ declare global {
 
     namespace __XJET {
         /**
-         * Unique identifier of the currently running test suite.
-         *
-         * @remarks
-         * Automatically set by the xJet test runner at runtime.
-         *
-         * @since 1.0.0
+         * Import will remove at compile time
          */
 
-        declare const suiteId: string;
+        import type { RuntimeConfigInterface } from '@targets/interfaces/traget.interface';
 
         /**
-         * Unique identifier of the runner executing the tests.
-         *
-         * @remarks
-         * Automatically set by the xJet test runner at runtime.
-         *
-         * @since 1.0.0
+         * Runtime information
          */
 
-        declare const runnerId: string;
+        declare const runtime: RuntimeConfigInterface;
     }
 }
 
