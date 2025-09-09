@@ -4,6 +4,7 @@
 
 import type { Options } from 'yargs';
 import type { BuildOptions } from 'esbuild';
+import type { LogLevel } from '@messages/constants/report.constant';
 
 /**
  * Represents a test runner engine responsible for executing bundled test files.
@@ -179,15 +180,21 @@ export interface ConfigurationInterface {
     filter: Array<string>;
 
     /**
-     * If true, suppress `console.log` and other console output from tests.
+     * Logging verbosity level for test execution.
      *
      * @remarks
-     * Useful when tests are noisy, and you want a clean reporter output.
+     * Determines which messages are shown during test runs.
+     * Controlled via {@link LogLevel}, which includes levels such as
+     * `Silent`, `Error`, `Warn`, `Info`, `Trace`, and `Debug`.
+     *
+     * This provides finer control than the `silent` flag,
+     * allowing reporters or console output to show only the
+     * desired level of detail.
      *
      * @since 1.0.0
      */
 
-    silent: boolean;
+    logLevel: keyof typeof LogLevel;
 
     /**
      * Maximum time (in milliseconds) a single test can run before being marked as failed.

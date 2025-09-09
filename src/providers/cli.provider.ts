@@ -83,9 +83,11 @@ const DEFAULT_CLI_OPTIONS = {
         describe: 'Include full stack traces, including internal frames',
         type: 'boolean'
     },
-    silent: {
-        describe: 'Suppress all console output from tests',
-        type: 'boolean'
+    logLevel: {
+        alias: 'l',
+        describe: 'Set the logging verbosity level (Silent, Error, Warn, Info, Debug)',
+        type: 'string',
+        choices: [ 'Silent', 'Error', 'Warn', 'Info', 'Debug' ]
     },
     timeout: {
         alias: 't',
