@@ -38,14 +38,61 @@ export default defineVersionedConfig({
         },
 
         nav: [
-            { text: 'Home', link: '.' },
+            { text: 'Home', link: '/' },
             {
                 component: 'VersionSwitcher'
             }
         ],
 
         sidebar: {
-            '/': [{ text: 'Guide', link: '.' }]
+            '/': [
+                { text: 'Guide', link: '/' },
+                { text: 'Log', link: '/log' },
+                {
+                    text: 'Configuration',
+                    collapsed: false,
+                    items: [
+                        { text: 'CLI Options', link: '/configuration/cli' },
+                        { text: 'Configuration File', link: '/configuration/file' }
+                    ]
+                },
+                {
+                    text: 'Test files',
+                    collapsed: false,
+                    items: [
+                        { text: 'Each', link: '/tests/each' },
+                        { text: 'Tests', link: '/tests/test' },
+                        { text: 'Hooks', link: '/tests/hooks' },
+                        { text: 'Describe', link: '/tests/describe' }
+                    ]
+                },
+                {
+                    text: 'Mocks',
+                    collapsed: false,
+                    items: [
+                        { text: 'Spy', link: '/mocks/spy' },
+                        { text: 'Mock', link: '/mocks/mock' },
+                        { text: 'Function', link: '/mocks/fn' }
+                    ]
+                },
+                {
+                    text: 'Advanced',
+                    collapsed: false,
+                    items: [{ text: 'External Runners', link: '/configuration/external-runners' }]
+                },
+                {
+                    text: 'Matchers',
+                    collapsed: false,
+                    items: [
+                        { text: 'Mock', link: '/xjet-expect/mock' },
+                        { text: 'Number', link: '/xjet-expect/number' },
+                        { text: 'Object', link: '/xjet-expect/object' },
+                        { text: 'String', link: '/xjet-expect/string' },
+                        { text: 'Equality', link: '/xjet-expect/equality' },
+                        { text: 'Functions', link: '/xjet-expect/functions' }
+                    ]
+                }
+            ]
         },
 
         socialLinks: [
