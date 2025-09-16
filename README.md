@@ -55,7 +55,7 @@ Run:
 
 
 ## Documentation
-For complete API documentation, examples, and guides, visit: [xAnsi Documentation](https://remotex-labs.github.io/xAnsi/)
+For complete API documentation, examples, and guides, visit: [xJet Documentation](https://remotex-labs.github.io/xJet/)
 
 ## Compatibility
 - Node.js 20+
