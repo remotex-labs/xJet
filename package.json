@@ -11,10 +11,10 @@
     "homepage": "https://remotex-labs.github.io/xJet/",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/remotex-lab/jet.git"
+        "url": "git+https://github.com/remotex-labs/xJet.git"
     },
     "bugs": {
-        "url": "https://github.com/remotex-lab/jet/issues"
+        "url": "https://github.com/remotex-labs/xJet/issues"
     },
     "keywords": [
         "jet",
