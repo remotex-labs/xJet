@@ -137,15 +137,20 @@ export function mockImplementation<Method, Args extends Array<unknown>, Context>
     if ((method as unknown as MockState).xJetMock)
         return <MockState<Method, Args, Context>> <unknown> method;
 
-    const parentObject = getParentObject(<FunctionLikeType> method);
+    let parentObject = getParentObject(<FunctionLikeType> method);
     if (!parentObject) {
         throw new ExecutionError('Method is not part of an object');
     }
 
-    const originalMethod = method;
+    const descriptor = Object.getOwnPropertyDescriptor(parentObject, method.name);
+    if (descriptor?.get && !descriptor.configurable) {
+        if ('default' in parentObject && (<Record<string, unknown>> parentObject.default)[method.name] === method) {
+            parentObject = <typeof parentObject> parentObject.default;
+        }
+    }
 
-    // Handle constructor-like methods
     // todo bind to class constructor
+    const originalMethod = parentObject[method.name];
     if (method.prototype && !Object.getOwnPropertyDescriptor(method, 'prototype')?.writable) {
         const mock = new MockState<Method, Args, Context>(
             (...args: Args) => new (method as ConstructorLikeType<Method, Args>)(...args),
@@ -160,7 +165,6 @@ export function mockImplementation<Method, Args extends Array<unknown>, Context>
         return parentObject[method.name] as MockState<Method, Args, Context>;
     }
 
-    // Handle regular functions
     if (typeof method === 'function') {
         const mock = new MockState(<FunctionLikeType> method, () => {
             parentObject[method.name] = originalMethod;
