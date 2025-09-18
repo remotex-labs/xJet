@@ -251,23 +251,23 @@ describe('spyOn for getters and setters', () => {
 describe('spyOn', () => {
     test('should throw an error when target is null or undefined', () => {
         expect(() => spyOnImplementation(null as any, 'method')).toThrow(
-            'Cannot use spyOn on a primitive value; object given'
+            'Target must be an object or function'
         );
         expect(() => spyOnImplementation(undefined as any, 'method')).toThrow(
-            'Cannot use spyOn on a primitive value; undefined given'
+            'Target must be an object or function'
         );
     });
 
     test('should throw an error when no property name is supplied', () => {
         const target = {};
         // @ts-expect-error null is not a valid type of spyOn
-        expect(() => spyOnImplementation(target, null)).toThrow('No property name supplied');
+        expect(() => spyOnImplementation(target, null)).toThrow('Spied property/method key is required');
     });
 
     test('should throw an error when the property does not exist', () => {
         const target = { method: () => 'test' };
         expect(() => spyOnImplementation(target, 'missingKey' as any)).toThrow(
-            'Property \'missingKey\' does not exist in the provided object'
+            'Property/method \'missingKey\' does not exist on target'
         );
     });
 
