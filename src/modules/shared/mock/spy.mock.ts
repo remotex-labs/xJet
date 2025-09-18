@@ -239,44 +239,57 @@ export function spyOnImplementation<Target, Key extends keyof Target>(target: Ta
  * It can modify non-function properties or replace function properties with a mock function for testing purposes.
  * The original method or property can be restored after the spy lifecycle is completed.
  *
- * This method will throw errors for invalid inputs or if the target object does not have the specified property.
+ * This method will throw errors for invalid inputs, or if the target object does not have the specified property.
  *
  * @since 1.0.0
  */
 
 export function spyOnImplementation<T extends object, K extends keyof T>(target: T, key: K): MockState {
-    if (target == null || (typeof target !== 'object' && typeof target !== 'function')) {
-        throw new ExecutionError(`Cannot use spyOn on a primitive value; ${ typeof target } given`);
-    }
+    if (target == null || (typeof target !== 'object' && typeof target !== 'function'))
+        throw new ExecutionError('Target must be an object or function');
 
-    if (key === null) {
-        throw new ExecutionError('No property name supplied');
-    }
+    if (key === null)
+        throw new ExecutionError('Spied property/method key is required');
 
-    const item = <FunctionLikeType | ConstructorLikeType> target[key];
-    if (!item) {
+    if (!(key in target))
+        throw new ExecutionError(`Property/method '${ String(key) }' does not exist on target`);
+
+    const method = <MockState | T[K]> Reflect.get(target, key);
+    const targetObject = target as T & { default: T };
+
+    if (!method)
         throw new Error(`Property '${ String(key) }' does not exist in the provided object`);
+
+    if((<MockState> method).xJetMock) {
+        return <MockState> method;
     }
 
-    const descriptor = Object.getOwnPropertyDescriptor(target, key);
-    if(descriptor && typeof descriptor.get === 'function' && descriptor.configurable === false) {
-        throw new Error(`Property '${ String(key) }' is not configurable in an getter object`);
+    let descriptor = Object.getOwnPropertyDescriptor(target, key);
+    if (descriptor?.get && !descriptor.configurable) {
+        if ('default' in targetObject && targetObject.default[key] === method) {
+            target = targetObject.default;
+            descriptor = Object.getOwnPropertyDescriptor(target, key);
+        } else {
+            throw new Error(`Property '${ String(key) }' is not configurable in an getter object`);
+        }
     }
 
-    if (typeof item !== 'function' || (descriptor && typeof descriptor.get === 'function')) {
+    if (typeof method !== 'function' || descriptor?.get) {
         return spyOnDescriptorProperty(target, key);
     }
 
-    if (!(<MockState> <unknown> item).isMock) {
-        let itemFunction: FunctionLikeType = <FunctionLikeType> item;
-        if (itemFunction.prototype && !Object.getOwnPropertyDescriptor(itemFunction, 'prototype')?.writable) {
-            itemFunction = (...args: unknown[]): unknown => new (<ConstructorLikeType<unknown, unknown[]>> item)(...args);
-        }
-
-        target[key] = <T[K]> new MockState(itemFunction, () => {
-            target[key] = <T[K]> item;
-        }, 'xJet.spyOn()');
+    let fn: FunctionLikeType = method as FunctionLikeType;
+    const protoDesc = Object.getOwnPropertyDescriptor(fn, 'prototype');
+    if (fn.prototype && protoDesc && !protoDesc.writable) {
+        fn = (...args: unknown[]): unknown => new (method as ConstructorLikeType<unknown, unknown[]>)(...args);
     }
 
-    return <MockState> target[key];
+    const mockState = new MockState(fn, () => {
+        Reflect.set(target, key, method);
+    }, 'xJet.spyOn()');
+
+    MockState.mocks.push(mockState);
+    Reflect.set(target, key, mockState);
+
+    return mockState;
 }
