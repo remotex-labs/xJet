@@ -134,7 +134,7 @@ export function fnImplementation<ReturnType, Args extends Array<unknown>, Contex
 export function mockImplementation<Method, Args extends Array<unknown>, Context>(
     method: FunctionLikeType<Method, Args, Context> | ConstructorLikeType<Method, Args>
 ): MockState<Method, Args, Context> {
-    if ((method as unknown as MockState).isMock)
+    if ((method as unknown as MockState).xJetMock)
         return <MockState<Method, Args, Context>> <unknown> method;
 
     const parentObject = getParentObject(<FunctionLikeType> method);

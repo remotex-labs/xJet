@@ -52,7 +52,6 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
      * Flag to detect mock functions
      */
 
-    readonly isMock: boolean = true;
     readonly xJetMock: boolean = true;
 
     /**

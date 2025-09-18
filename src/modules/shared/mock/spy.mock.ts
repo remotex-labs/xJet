@@ -267,7 +267,7 @@ export function spyOnImplementation<T extends object, K extends keyof T>(target:
         return spyOnDescriptorProperty(target, key);
     }
 
-    if (!(<MockState> <unknown> item).isMock) {
+    if (!(<MockState> <unknown> item).xJetMock) {
         let itemFunction: FunctionLikeType = <FunctionLikeType> item;
         if (itemFunction.prototype && !Object.getOwnPropertyDescriptor(itemFunction, 'prototype')?.writable) {
             itemFunction = (...args: unknown[]): unknown => new (<ConstructorLikeType<unknown, unknown[]>> item)(...args);
