@@ -9,6 +9,8 @@ import type { FunctionLikeType } from '@remotex-labs/xjet-expect';
  */
 
 import { TimeoutError } from '@errors/timeout.error';
+import { inject } from '@symlinks/services/inject.service';
+import { TimerService } from '@shared/services/timer.service';
 
 
 /**
@@ -58,18 +60,20 @@ import { TimeoutError } from '@errors/timeout.error';
 export async function withTimeout<T>(
     task: FunctionLikeType<T | Promise<T>> | Promise<T> | T, delay: number, at: string, stack?: string
 ): Promise<T> {
+    const timers = inject(TimerService);
+
     const taskPromise =
         typeof task === 'function'
             ? Promise.resolve((task as FunctionLikeType<T | Promise<T>>)())
             : Promise.resolve(task);
 
-    if (delay === -1 || !globalThis?.setTimeout) {
+    if (delay === -1 || !timers.originalSetTimeout) {
         return taskPromise;
     }
 
     let timeoutId: ReturnType<typeof setTimeout>;
     const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutId = globalThis?.setTimeout?.(
+        timeoutId = timers.originalSetTimeout?.(
             () => reject(new TimeoutError(delay, at, stack)),
             delay
         );
@@ -78,7 +82,7 @@ export async function withTimeout<T>(
     try {
         return await Promise.race([ taskPromise, timeoutPromise ]);
     } finally {
-        globalThis?.clearTimeout?.(timeoutId!);
+        timers.originalClearTimeout?.(timeoutId!);
     }
 }
 

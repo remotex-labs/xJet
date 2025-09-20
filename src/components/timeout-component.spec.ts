@@ -2,7 +2,9 @@
  * Imports
  */
 
+import { inject } from '@symlinks/services/inject.service';
 import { withTimeout } from '@components/timeout.component';
+import { TimerService } from '@shared/services/timer.service';
 
 /**
  * Mock dependencies
@@ -89,8 +91,8 @@ describe('withTimeout', () => {
     });
 
     test('should clear timeout when task completes successfully', async () => {
-        // Arrange
-        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const timers = inject(TimerService);
+        const clearTimeoutSpy = jest.spyOn(timers, 'originalClearTimeout');
         const task = jest.fn().mockResolvedValue('success');
         const delay = 1000;
         const at = 'test-clear-timeout';
@@ -103,8 +105,8 @@ describe('withTimeout', () => {
     });
 
     test('should clear timeout even when task throws an error', async () => {
-        // Arrange
-        const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+        const timers = inject(TimerService);
+        const clearTimeoutSpy = jest.spyOn(timers, 'originalClearTimeout');
         const taskError = new Error('Task failed');
         const task = jest.fn().mockRejectedValue(taskError);
         const delay = 1000;
