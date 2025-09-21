@@ -1,21 +1,15 @@
 /**
- * Import will remove at compile time
- */
-
-import type { UserConfig } from 'vitepress';
-
-/**
  * Imports
  */
 
-import { join } from 'path';
-import defineVersionedConfig from 'vitepress-versioning-plugin';
+import { defineVersionedConfig } from '@viteplus/versions';
 
 /**
  * Doc config
  */
 
 export default defineVersionedConfig({
+    root: 'docs',
     title: 'xJet',
     base: '/xJet/',
     srcDir: 'src',
@@ -106,6 +100,6 @@ export default defineVersionedConfig({
         }
     },
     versioning: {
-        latestVersion: 'v1.0.x'
+        latestVersion: 'v1.1.x'
     }
-}, join(__dirname, '../src', 'versions')) as UserConfig;
+});

@@ -8,6 +8,7 @@ import { SuiteState } from '@shared/states/suite.state';
 import { inject } from '@symlinks/services/inject.service';
 import * as logging from '@shared/components/log.component';
 import { spyOnImplementation } from '@shared/mock/spy.mock';
+import * as FakeTimer from '@shared/services/timer.service';
 import { TestDirective } from '@shared/directives/test.directive';
 import { DescribeDirective } from '@shared/directives/describe.directive';
 import { fnImplementation, mockImplementation } from '@shared/mock/fn.mock';
@@ -55,17 +56,36 @@ const setupGlobals = (): void => {
     const globals = globalThis as { [key: string]: unknown; };
 
     globals.xJet = {
+        /**
+         * Mock
+         */
+
         fn: fnImplementation,
         mock: mockImplementation,
         spyOn: spyOnImplementation,
+        clearAllMocks: (): void => clearMocks('mockClear'),
+        resetAllMocks: (): void => clearMocks('mockReset'),
+        restoreAllMocks: (): void => clearMocks('mockRestore'),
+
+        /**
+         * Logs
+         */
+
         log: logging.log,
         info: logging.info,
         warn: logging.warn,
         error: logging.error,
         debug: logging.debug,
-        clearAllMocks: (): void => clearMocks('mockClear'),
-        resetAllMocks: (): void => clearMocks('mockReset'),
-        restoreAllMocks: (): void => clearMocks('mockRestore')
+
+        /**
+         * Timers
+         */
+
+        runAllTimers: FakeTimer.runAllTimers,
+        useFakeTimers: FakeTimer.useFakeTimers,
+        useRealTimers: FakeTimer.useRealTimers,
+        advanceTimersByTime: FakeTimer.advanceTimersByTime,
+        runOnlyPendingTimers: FakeTimer.runOnlyPendingTimers
     };
 
     globals.expect = xExpect;
