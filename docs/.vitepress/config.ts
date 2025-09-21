@@ -100,6 +100,6 @@ export default defineVersionedConfig({
         }
     },
     versioning: {
-        latestVersion: 'v1.0.x'
+        latestVersion: 'v1.1.x'
     }
 });
