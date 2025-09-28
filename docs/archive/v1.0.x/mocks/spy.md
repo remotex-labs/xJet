@@ -1,7 +1,7 @@
 # Spy
 
 The **Spy** mock allow you to intercept, mock, and observe function and property behavior on objects, classes,
-or constructors. They are commonly used to track function calls, monitor property access, 
+or constructors. They are commonly used to track function calls, monitor property access,
 and mock or override return values for testing purposes.
 
 ## Overview
@@ -13,6 +13,7 @@ A spy wraps a function, property, or constructor so you can:
 - Restore original behavior after the test, if needed.
 
 Spies can be applied to:
+
 - **Object methods or properties** (instance or static)
 - **Static properties/methods on classes**
 - **Constructors**

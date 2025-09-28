@@ -1,6 +1,6 @@
 # Fn
 
-The `xJet.fn()` utilities let you create highly configurable mocks for functions, constructors, or methods. 
+The `xJet.fn()` utilities let you create highly configurable mocks for functions, constructors, or methods.
 These mocks let you track calls, control behavior, and replace implementation logic for powerful and isolated testing scenarios.
 
 ## Overview
@@ -90,5 +90,3 @@ A mock created via `xJet.fn` (or `.mock`) exposes all `MockState` methods and pr
 
 - [Spy API](/mocks/spy)
 - [Mock](/mocks/mock)
-
-

@@ -1,8 +1,10 @@
 # Asymmetric Matchers
+
 Asymmetric matchers provide flexible ways to verify that values meet certain conditions without requiring exact equality.
 They're especially useful when only certain aspects of an object need validation or when dealing with dynamic data.
 
 ## Basic Usage
+
 Asymmetric matchers can be used in any xJet assertion that compares values:
 
 ```ts
@@ -20,6 +22,7 @@ test('user data has expected structure', () => {
 ```
 
 ## Where Asymmetric Matchers Can Be Used
+
 Asymmetric matchers work with multiple matchers across the xJet testing framework:
 
 ```ts
@@ -50,7 +53,6 @@ expect(response).toMatchObject({
 ::: tip
 Each matcher includes information about whether it supports **Asymmetric Matchers**.
 :::
-
 
 ## any
 
@@ -203,6 +205,7 @@ test('string content validation', () => {
 ```
 
 ## Negated Matchers with `.not`
+
 Use the namespace to negate any matcher's behavior: `.not`
 
 ```ts

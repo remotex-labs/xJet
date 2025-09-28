@@ -4,9 +4,9 @@ outline: deep
 
 # Guide
 
-# xJet
-
-**xJet** is a modern, extensible test and mocking toolkit designed for JavaScript and TypeScript ecosystems. It combines test definitions, matchers, mocks, spies, logging utilities, and more, aiming to offer a streamlined, expressive, and highly productive developer experience for creating robust automated tests.
+**xJet** is a modern, extensible test and mocking toolkit designed for JavaScript and TypeScript ecosystems.
+It combines test definitions, matchers, mocks, spies, logging utilities, and more, aiming to offer a streamlined, expressive,
+and highly productive developer experience for creating robust automated tests.
 
 ## Key Features
 
@@ -14,7 +14,8 @@ outline: deep
   Define tests using familiar patterns (`test`, `it`, `describe`, etc.), with support for lifecycle hooks (`beforeEach`, `afterEach`, etc.) and data-driven testing.
 
 - **Advanced Mocking:**  
-  Easily mock functions, constructors, and methods, including global and object-bound members, with features like `mockImplementation`, call history tracking, return value injection, and restoration of original implementations.
+  Easily mock functions, constructors, and methods, including global and object-bound members, with features like `mockImplementation`,
+- call history tracking, return value injection, and restoration of original implementations.
 
 - **Powerful Spies:**  
   Observe and assert upon function calls without altering their implementation.
@@ -86,7 +87,6 @@ describe('User model', () => {
 - Add `@remotex-labs/xjet` as a dependency to your project
 - Initialize your test files with `xJet` globals available
 - Use the provided APIs for defining, structuring, and verifying your tests with optimal productivity and clarity
-
 
 Run:
 

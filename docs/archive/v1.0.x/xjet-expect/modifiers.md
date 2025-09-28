@@ -4,6 +4,7 @@ Modifiers enhance your test assertions by adapting matcher behavior for differen
 hey connect your `expect()` statement to the actual matcher, allowing for more flexible and powerful tests in your xJet test suites.
 
 ## not
+
 Inverts your assertion to verify that something is false rather than true.
 
 ```ts
@@ -18,6 +19,7 @@ test('verifies incorrect password is rejected', () => {
 ```
 
 ## resolves
+
 Unwraps a fulfilled promise's value so you can test the resolved result directly.
 
 ```ts
@@ -35,12 +37,13 @@ test('API request completes successfully', async () => {
 ```
 
 ::: tip
-**Best Practice:** The async/await syntax is generally more readable than the return approach. 
+**Best Practice:** The async/await syntax is generally more readable than the return approach.
 It allows for cleaner test organization, especially when you need to perform additional assertions after the promise resolves.
 :::
 
 ## rejects
-Tests that a promise rejects and allow you to verify the rejection reason. 
+
+Tests that a promise rejects and allow you to verify the rejection reason.
 The modifier works with both promises that explicitly call `reject()` and those that throw exceptions inside the promise executor. `.rejects`
 
 ### Promise rejection patterns
@@ -71,6 +74,7 @@ test('promise rejection patterns', async () => {
 ```
 
 You can use either `toBe()` to match the exact rejection value or for error-like objects: `toThrow()`
+
 ```ts
 test('different assertion styles with rejects', async () => {
   // When rejecting with a string
@@ -99,11 +103,12 @@ test('different assertion styles with rejects', async () => {
 ```
 
 ::: info
-While both `toBe` and can be used with, 
+While both `toBe` and can be used with,
 using is generally preferred when testing Error objects as it provides better error messages and can check error types `toThrow()`, `.rejects`, `toThrow()`
 :::
 
 ## Combining Modifiers
+
 You can use modifiers together with various matchers to create powerful assertions:
 
 ```ts

@@ -1,7 +1,9 @@
 # Function Matchers
+
 Function matchers allow you to test function behavior, particularly for error handling and exceptions.
 
 ## toThrow
+
 Checks if a function throws an error when executed. This matcher can verify that exceptions are properly thrown and that they match expected criteria.
 
 ```ts
@@ -15,12 +17,13 @@ The `expected` parameter is optional and versatile, allowing you to check differ
 :::
 
 ### Parameters
+
 - `expected`: (Optional) The expected error criteria, which can be:
-    - Constructor function (e.g., `Error`, `TypeError`)
-    - String substring that should be in the error message
-    - RegExp pattern to match against the error message
-    - Object to match with the thrown error
-    - Asymmetric matcher
+  - Constructor function (e.g., `Error`, `TypeError`)
+  - String substring that should be in the error message
+  - RegExp pattern to match against the error message
+  - Object to match with the thrown error
+  - Asymmetric matcher
 
 ### Basic Usage
 
@@ -31,6 +34,7 @@ expect(() => { console.log('ok') }).not.toThrow()
 ```
 
 ### With Error Constructors
+
 ```ts
 // Test for specific error types
 expect(() => { throw new TypeError('invalid type') }).toThrow(TypeError)
@@ -43,6 +47,7 @@ expect(() => { throw new ValidationError('invalid data') }).toThrow(ValidationEr
 ```
 
 ### With String Messages
+
 ```ts
 // Test for error message content
 expect(() => { throw new Error('invalid password') }).toThrow('password')
@@ -51,6 +56,7 @@ expect(() => { throw new Error('Connection failed') }).not.toThrow('success')
 ```
 
 ### With RegExp Patterns
+
 ```ts
 // Test error message patterns
 expect(() => { throw new Error('invalid email: user@example') }).toThrow(/invalid email/)
@@ -59,6 +65,7 @@ expect(() => { throw new Error('API Error: Rate limit exceeded') }).not.toThrow(
 ```
 
 ### With Objects
+
 ```ts
 // Test for object properties
 expect(() => { 
@@ -88,6 +95,7 @@ expect(() => {
 ```
 
 ### With Asymmetric Matchers
+
 ```ts
 expect(() => { 
   throw { 
@@ -102,6 +110,7 @@ expect(() => {
 ```
 
 ## Usage with Promises
+
 When testing async functions and promises, you can combine `toThrow` with the `rejects` modifier:
 
 ```ts
@@ -116,7 +125,9 @@ await expect(async () => {
 ```
 
 ## Common Patterns and Best Practices
+
 ### Testing Error Boundaries
+
 ``` ts
 test('component error boundary catches rendering errors', () => {
   const errorSpy = xJet.spyOn(console, 'error').mockImplementation(() => {})
@@ -128,7 +139,9 @@ test('component error boundary catches rendering errors', () => {
   errorSpy.mockRestore()
 })
 ```
+
 ### Validating Input Parameters
+
 ``` ts
 test('validateEmail throws for invalid emails', () => {
   expect(() => validateEmail('')).toThrow('Email cannot be empty')
@@ -136,7 +149,9 @@ test('validateEmail throws for invalid emails', () => {
   expect(() => validateEmail('user@example.com')).not.toThrow()
 })
 ```
+
 ### Testing Error States in API Calls
+
 ``` ts
 test('API client throws meaningful errors', async () => {
   // Mock failed network request
@@ -150,7 +165,9 @@ test('API client throws meaningful errors', async () => {
   await expect(api.getUser(999)).rejects.toThrow(/not found/i)
 })
 ```
+
 ### Testing Custom Error Classes
+
 ``` ts
 test('database operations throw specific errors', () => {
   class DatabaseError extends Error {
@@ -171,7 +188,9 @@ test('database operations throw specific errors', () => {
   }))
 })
 ```
+
 ### Testing Error Chains
+
 ``` ts
 test('processPayment forwards underlying errors', () => {
   // Mock payment processor that throws

@@ -1,8 +1,8 @@
 # xJet Logging Utilities
 
-`xJet` provides a suite of logging functions designed for use during test runtime. 
-These functions let you send logs, errors, warnings, 
-or debug output directly to the test runner or reporting layer, 
+`xJet` provides a suite of logging functions designed for use during test runtime.
+These functions let you send logs, errors, warnings,
+or debug output directly to the test runner or reporting layer,
 making it easy to trace, debug, and communicate test state from inside any test or helper.
 
 ## API
@@ -40,4 +40,3 @@ Debug:
 | `xJet.warn`       | Potential problems or warnings           | `xJet.warn('Threshold exceeded:', value)`          |
 | `xJet.error`      | Errors or failed operations              | `xJet.error('Exception:', error)`                  |
 | `xJet.debug`      | Detailed debug information               | `xJet.debug('Params:', params)`                    |
-

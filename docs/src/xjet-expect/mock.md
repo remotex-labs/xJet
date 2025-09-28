@@ -10,7 +10,7 @@ Verifies that a mock function has been called at least once.
 expect(mockFn).toHaveBeenCalled()
 ```
 
-### Examples
+Examples:
 
 ```ts
 // Creating a mock function
@@ -26,16 +26,18 @@ expect(unusedMock).not.toHaveBeenCalled() // Passes
 ```
 
 ## toHaveBeenCalledTimes
+
 Verifies that a mock function has been called an exact number of times.
 
 ```ts
 expect(mockFn).toHaveBeenCalledTimes(expectedCount)
 ```
 
-### Parameters
+Parameters:
+
 - `expectedCount`: The exact number of times the mock should have been called
 
-### Examples
+Examples:
 
 ```ts
 const mockFn = xJet.fn()
@@ -52,6 +54,7 @@ expect(mockFn).not.toHaveBeenCalledTimes(2) // Passes
 ```
 
 ## toHaveBeenCalledWith
+
 Verifies that a mock function has been called with specified arguments at least once.
 
 ```ts
@@ -62,11 +65,11 @@ expect(mockFn).toHaveBeenCalledWith(...expectedArgs)
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
 
 - `...expectedArgs`: The expected arguments that the mock function should have been called with
 
-### Examples
+Examples:
 
 ```ts
 const mockFn = xJet.fn()
@@ -94,8 +97,8 @@ expect(mockFn).toHaveBeenCalledWith(
 ) // Passes
 ```
 
-
 ## toHaveBeenLastCalledWith
+
 Verifies that the last call to a mock function was with specified arguments.
 
 ```ts
@@ -106,10 +109,11 @@ expect(mockFn).toHaveBeenLastCalledWith(...expectedArgs)
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
+
 - `...expectedArgs`: The expected arguments of the last call to the mock function
 
-### Examples
+Examples:
 
 ```ts
 const mockFn = xJet.fn()
@@ -129,8 +133,8 @@ expect(mockFn).toHaveBeenLastCalledWith(
 ) // Passes
 ```
 
-
 ## toHaveBeenNthCalledWith
+
 Verifies that the nth call to a mock function was with specified arguments.
 
 ```ts
@@ -141,11 +145,12 @@ expect(mockFn).toHaveBeenNthCalledWith(n, ...expectedArgs)
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
+
 - `n`: The call number to check (1-based index)
 - `...expectedArgs`: The expected arguments of the nth call
 
-### Examples
+Examples:
 
 ```ts
 const mockFn = xJet.fn()
@@ -171,13 +176,15 @@ expect(mockFn).toHaveBeenNthCalledWith(
 ```
 
 ## toHaveReturned
+
 Verifies that a mock function successfully returned at least once (did not throw).
 
 ```ts
 expect(mockFn).toHaveReturned()
 ```
 
-### Examples
+Examples:
+
 ```ts
 // Mock that returns normally
 const successMock = xJet.fn(() => true)
@@ -205,18 +212,20 @@ mixedMock(5)
 expect(mixedMock).toHaveReturned() // Passes - returned at least once
 ```
 
-
 ## toHaveReturnedTimes
+
 Verifies that a mock function successfully returned exactly n times.
 
 ```ts
 expect(mockFn).toHaveReturnedTimes(expectedCount)
 ```
 
-### Parameters
+Parameters:
+
 - `expectedCount`: The exact number of times the mock should have returned
 
-### Examples
+Examples:
+
 ```ts
 const mockFn = xJet.fn(x => x * 2)
 
@@ -239,8 +248,8 @@ mixedMock(2)
 expect(mixedMock).toHaveReturnedTimes(2) // Passes - only counts successful returns
 ```
 
-
 ## toHaveLastReturnedWith
+
 Verifies that the last return value of a mock function matches the expected value.
 
 ```ts
@@ -251,10 +260,12 @@ expect(mockFn).toHaveLastReturnedWith(expectedValue)
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
+
 - `expectedValue`: The value that should match the last return of the mock function
 
-### Examples
+Examples:
+
 ```ts
 const mockFn = xJet.fn()
 mockFn.mockReturnValueOnce('first result')
@@ -276,8 +287,8 @@ expect(dataMock).toHaveLastReturnedWith(
 ) // Passes
 ```
 
-
 ## toHaveNthReturnedWith
+
 Verifies that the nth return value of a mock function matches the expected value.
 
 ```ts
@@ -288,11 +299,13 @@ expect(mockFn).toHaveNthReturnedWith(n, expectedValue)
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
+
 - `n`: The call number to check (1-based index)
 - `expectedValue`: The value that should match the nth return of the mock function
 
-### Examples
+Examples:
+
 ```ts
 const mockFn = xJet.fn()
   .mockReturnValueOnce('first')
@@ -322,8 +335,8 @@ expect(complexMock).toHaveNthReturnedWith(
 ) // Passes
 ```
 
-
 ## Common Testing Patterns
+
 ### Testing Callback Arguments
 
 ```ts
@@ -342,8 +355,8 @@ test('callback is called with correct arguments', () => {
 })
 ```
 
-
 ### Testing API Requests
+
 ```ts
 test('API endpoint is called with correct parameters', async () => {
   // Mock the fetch function
@@ -369,6 +382,7 @@ test('API endpoint is called with correct parameters', async () => {
 ```
 
 ### Testing Call Order
+
 ```ts
 test('operations are performed in the correct sequence', () => {
   const logger = xJet.fn()
@@ -391,6 +405,7 @@ test('operations are performed in the correct sequence', () => {
 ```
 
 ### Testing Conditional Logic
+
 ```ts
 test('conditional function calls', () => {
   const mockFn = xJet.fn()
@@ -417,6 +432,7 @@ test('conditional function calls', () => {
 ```
 
 ### Testing Return Values
+
 ```ts
 test('function returns expected values', () => {
   const transformData = xJet.fn()
@@ -433,6 +449,7 @@ test('function returns expected values', () => {
 ```
 
 ### Testing Event Handlers
+
 ```ts
 test('event handlers are called correctly', () => {
   // Mock event handlers

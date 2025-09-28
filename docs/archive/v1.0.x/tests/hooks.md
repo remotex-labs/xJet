@@ -7,14 +7,15 @@ Lifecycle hooks allow you to run code at different stages of a test suite:
 - **beforeEach**: Runs before each test in the suite.
 - **afterEach**: Runs after each test in the suite.
 
-Each hook can handle synchronous actions, Promises/async functions, 
+Each hook can handle synchronous actions, Promises/async functions,
 or code using a callback (the classic “done” pattern).
 
 ## Inheritance and Execution Order
 
 xJet hooks are **inherited down the describe tree**, and **executed in a defined parent-to-child (root-to-leaf) order**:
 
-- **beforeAll**: Runs once per describe block, before any tests or nested describes within that block begin. If you nest describes, every relevant `beforeAll` hook (from the root outward) is called, in order.
+- **beforeAll**: Runs once per describe block, before any tests or nested describes within that block begin. If you nest describes,
+    every relevant `beforeAll` hook (from the root outward) is called, in order.
 - **beforeEach**: Runs before every test, cascading from root-most to leaf-most describe (outermost parent first, innermost child last).
 - **afterEach**: Runs after every test, cascading from innermost child to outermost parent (leaf to root).
 - **afterAll**: Runs once per describe block, after all tests and nested describes have finished, from innermost child describe to the outermost parent (leaf to root).

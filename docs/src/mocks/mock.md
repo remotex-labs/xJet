@@ -1,8 +1,8 @@
 # xJet.mock – Mock Any Global Function, Method, or Constructor
 
-The `xJet.mock()` utility enables you to replace existing global or object-bound functions, 
-class methods, or constructors with powerful, controllable mocks. 
-This allows you to intercept invocations, inspect arguments/results, 
+The `xJet.mock()` utility enables you to replace existing global or object-bound functions,
+class methods, or constructors with powerful, controllable mocks.
+This allows you to intercept invocations, inspect arguments/results,
 return custom values, and later restore the original behavior seamlessly.
 
 ## What Does xJet.mock Do?
@@ -58,7 +58,6 @@ test('some test', () => {
 
 You can use `xJet.mock()` to mock any function on the `globalThis` scope or within objects.
 
-
 ## API Overview
 
 The returned mock exposes all `MockState` methods and properties, providing extensive control and insight:
@@ -77,7 +76,7 @@ The returned mock exposes all `MockState` methods and properties, providing exte
 | `getMockImplementation()`    | Gets the current implementation.                                                      |
 | `original(...args)`          | Directly call the original unmocked function/constructor.                             |
 | `mock.calls`                 | Array of all calls (`[[args1], [args2], ...]`).                                       |
-| `mock.results`               | Array of call results: `{ type: "return"                                              |"throw", value }`.                         |
+| `mock.results`               | Array of call results: `{ type: "return", value: "throw" }`.                          |
 | `mock.instances`             | Constructed instances if used as a constructor.                                       |
 | `mock.contexts`              | Value of `this` for each call.                                                        |
 | `getMockName()`              | Returns name of the mock (for compatibility/testing utilities).                       |

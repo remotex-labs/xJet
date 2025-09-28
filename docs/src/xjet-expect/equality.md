@@ -1,7 +1,9 @@
 # Equality Matchers
+
 Equality matchers provide different ways to compare values in your tests, from strict equality to deep object comparison.
 
 ## toBe
+
 Checks if the received value is strictly equal to the expected value using `Object.is()`.
 
 ```ts
@@ -14,6 +16,7 @@ expect(value).toBe(expected)
 :::
 
 ### Examples
+
 ```ts
 // Primitives
 expect(2 + 2).toBe(4)
@@ -31,6 +34,7 @@ expect(42).toBe(expect.any(Number))
 ```
 
 ### Common Mistakes
+
 ```ts
 // This fails because they're different object references
 expect({ a: 1 }).toBe({ a: 1 })
@@ -42,6 +46,7 @@ expect([1, 2, 3]).toBe([1, 2, 3])
 If you want to compare value equality for objects or arrays, use `toEqual` instead.
 
 ### Choosing Between toBe and toEqual
+
 - Use `toBe` when you need to ensure it's exactly the same instance (reference equality)
 - Use `toEqual` when you care about value equivalence rather than identity
 
@@ -53,8 +58,8 @@ expect(2 + 2).toBe(4)
 expect({ id: 1, name: 'Test' }).toEqual({ id: 1, name: 'Test' })
 ```
 
-
 ## toEqual
+
 Performs a deep equality check between the received and expected values.
 
 ```ts
@@ -66,8 +71,6 @@ expect(value).toEqual(expected)
 ::: info
 :rocket: **Supports asymmetric matchers** - at any level of nesting
 :::
-
-### Examples
 
 ```ts
 // Objects with the same properties
@@ -104,30 +107,28 @@ expect({
 ```
 
 ## toBeNull
+
 Checks if the received value is exactly `null`.
 
 ```ts
 expect(value).toBeNull()
 ```
 
-### Examples
-
 ```ts
 expect(null).toBeNull()
 expect(undefined).not.toBeNull()
 expect(0).not.toBeNull()
 expect('').not.toBeNull()
-
 ```
 
 ## toBeUndefined
+
 Checks if the received value is exactly `undefined`.
 
 ```ts
 expect(value).toBeUndefined()
 ```
 
-### Examples
 ```ts
 expect(undefined).toBeUndefined()
 expect(void 0).toBeUndefined()
@@ -136,9 +137,9 @@ expect(0).not.toBeUndefined()
 ```
 
 ## toBeDefined
+
 Checks if the received value is not `undefined`.
 
-### Examples
 ```ts
 expect(null).toBeDefined()
 expect(0).toBeDefined()
@@ -149,13 +150,13 @@ expect(undefined).not.toBeDefined()
 ```
 
 ## toBeNaN
+
 Checks if the received value is `NaN`.
 
 ```ts
 expect(value).toBeNaN()
 ```
 
-### Examples
 ```ts
 expect(NaN).toBeNaN()
 expect(0/0).toBeNaN()
@@ -164,13 +165,13 @@ expect(42).not.toBeNaN()
 ```
 
 ## toBeTruthy
+
 Checks if the received value is truthy (evaluates to true in a boolean context).
 
 ```ts
 expect(value).toBeTruthy()
 ```
 
-### Examples
 ```ts
 expect(true).toBeTruthy()
 expect(1).toBeTruthy()
@@ -186,9 +187,9 @@ xExpect(undefined).not.toBeTruthy()
 ```
 
 ## toBeFalsy
+
 Checks if the received value is falsy (evaluates to false in a boolean context).
 
-### Examples
 ```ts
 xExpect(false).toBeFalsy()
 xExpect(0).toBeFalsy()

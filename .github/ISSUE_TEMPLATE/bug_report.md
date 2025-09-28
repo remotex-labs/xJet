@@ -20,6 +20,7 @@ Typescript Version:
 OS:
 
 ### Link to repo showing the issue
+
 (optional, but helps _a lot_)
 
 ### Expected Behaviour:
@@ -29,4 +30,5 @@ OS:
 ### Stack Trace/Error Message:
 
 ### Additional Notes:
+
 (optional)

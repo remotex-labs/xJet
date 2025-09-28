@@ -1,7 +1,9 @@
 # Object Matchers
+
 Object matchers allow you to test properties, structures, and relationships of objects and arrays in your tests.
 
 ## toHaveProperty
+
 Checks if an object has a specified property path, and optionally that the value at that path equals the expected value.
 
 ``` ts
@@ -12,11 +14,13 @@ expect(object).toHaveProperty(path, value?)
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
+
 - `path`: String with dot notation or array of strings representing the property path
 - `value`: (Optional) Expected value at the given path
 
-### Examples
+Examples:
+
 ``` ts
 // Basic property checks
 expect({ name: 'John' }).toHaveProperty('name')
@@ -36,6 +40,7 @@ expect({ user: { role: 'admin' } }).not.toHaveProperty('user.permissions')
 ```
 
 ### Using Array Notation
+
 You can use either dot notation or array notation for nested properties:
 
 ``` ts
@@ -48,16 +53,19 @@ expect({ 'user.name': 'John' }).toHaveProperty(['user.name'])
 ```
 
 ## toBeInstanceOf
+
 Checks if a value is an instance of a specified class or constructor function.
 
 ``` ts
 expect(value).toBeInstanceOf(constructor)
 ```
 
-### Parameters
+Parameters:
+
 - `constructor`: The expected constructor function or class
 
-### Examples
+Examples:
+
 ``` ts
 // Built-in JavaScript classes
 expect(new Date()).toBeInstanceOf(Date)
@@ -87,18 +95,21 @@ expect(null).not.toBeInstanceOf(Object)
 ```
 
 ## toContain
+
 Checks if an array contains a specific element or if a string contains a specific substring.
 
 ``` ts
 expect(arrayOrString).toContain(value)
 ```
 
-### Parameters
+Parameters:
+
 - `value`: The expected item or substring to find
 
-### Examples
+Examples:
 
-#### With Arrays
+> With Arrays:
+
 ``` ts
 // Simple values in array
 expect([1, 2, 3]).toContain(2)
@@ -113,7 +124,8 @@ expect([{ id: 1 }, { id: 2 }]).not.toContain({ id: 1 })  // Fails - different re
 expect(['hello', 'world']).toContain('hello')
 ```
 
-#### With Strings
+> With Strings
+
 ``` ts
 // Substring matching
 expect('hello world').toContain('world')
@@ -125,6 +137,7 @@ expect('Hello World').not.toContain('hello')  // Case-sensitive by default
 ```
 
 ### Common Mistakes
+
 When checking for objects or arrays in an array, `toContain` uses reference equality, not structural equality:
 
 ``` ts
@@ -136,6 +149,7 @@ expect([{ a: 1 }, { b: 2 }]).toContainEqual({ a: 1 })
 ```
 
 ## toContainEqual
+
 Checks if an array contains an element that is deeply equal to the expected value.
 
 ``` ts
@@ -146,10 +160,12 @@ expect(array).toContainEqual(value)
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
+
 - `value`: The expected value to find in the array (using deep equality)
 
-### Examples
+Examples:
+
 ``` ts
 // Basic object equality
 expect([{ a: 1 }, { b: 2 }]).toContainEqual({ a: 1 })
@@ -186,19 +202,23 @@ xExpect([
 ```
 
 ## toMatchObject
+
 Checks if an object matches the expected object by performing a deep partial equality comparison.
 
 ``` ts
 xExpect(object).toMatchObject(expected)
 ```
+
 ::: info
 :rocket: **Supports asymmetric matchers**
 :::
 
-### Parameters
+Parameters:
+
 - `expected`: The partial object to match against
 
-### Examples
+Examples:
+
 ``` ts
 // Basic object matching
 xExpect({ name: 'John', age: 30 }).toMatchObject({ name: 'John' })
@@ -242,6 +262,7 @@ xExpect({
 ```
 
 ### Important Notes
+
 - `toMatchObject` checks that the received object contains all the properties in the expected object with equal values
 - Properties not specified in the expected object are ignored
 - The comparison is deep, including nested objects and arrays
@@ -270,6 +291,7 @@ xExpect({
 ## Common Testing Patterns
 
 ### Testing API Responses
+
 ``` ts
 test('API returns correct user data', async () => {
   const response = await fetchUser(123)
@@ -284,6 +306,7 @@ test('API returns correct user data', async () => {
 ```
 
 ### Validating Object Structur
+
 ``` ts
 test('config object has required properties', () => {
   const config = loadConfig()
@@ -293,7 +316,9 @@ test('config object has required properties', () => {
   xExpect(config).toHaveProperty('debug', false)
 })
 ```
+
 ### Testing Class Instances
+
 ``` ts
 test('factory creates correct instance types', () => {
   const factory = new ShapeFactory()
@@ -308,6 +333,7 @@ test('factory creates correct instance types', () => {
 ```
 
 ### Filtering Collections
+
 ``` ts
 test('filter returns matching items', () => {
   const items = [
@@ -331,6 +357,7 @@ test('filter returns matching items', () => {
 ```
 
 ### Combining Matchers
+
 ``` ts
 test('user object has correct structure and values', () => {
   const user = {

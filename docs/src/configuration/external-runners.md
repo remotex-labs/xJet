@@ -1,41 +1,43 @@
 # Creating a Custom TCP Runner for xJet
 
-You can extend xJet to run tests on remote environments or separate processes using a custom runner over TCP. 
-This approach lets you offload test execution to an external service, a different machine, or even a container, 
+You can extend xJet to run tests on remote environments or separate processes using a custom runner over TCP.
+This approach lets you offload test execution to an external service, a different machine, or even a container,
 while keeping the xJet orchestration and reporting features.
 This guide walks you through building a TCP-based test runner with an example client (runner) and server in JavaScript/TypeScript.
 
 ## Key Concepts
 
-- **TestRunnerInterface**: To be compatible, your runner must implement the `TestRunnerInterface`. This defines methods for connecting (`connect`), dispatching test suites (`dispatch`), and (optionally) disconnecting.
+- **TestRunnerInterface**: To be compatible, your runner must implement the `TestRunnerInterface`.
+    This defines methods for connecting (`connect`), dispatching test suites (`dispatch`), and (optionally) disconnecting.
 - **Communication Protocol**: All communication over TCP is done using a length-prefixed binary protocol. Each message is prepended with a 4-byte big-endian integer indicating the message length.
 - **Global Dispatch**: Your runner environment must expose a global `dispatch` function, which test code uses to send messages (e.g., test results, logs) back to the xJet process.
-
 
 ## Architecture
 
 - **Client Side (“Runner”):**
-    - Is instantiated by xJet as part of your config’s `testRunners` array.
-    - Connects to a TCP server (host/port), identifies itself, and waits for test suites to execute.
-    - Sends the test suite code plus a `suiteId` to the server.
-    - Handles all messages received from the server.
+  - Is instantiated by xJet as part of your config’s `testRunners` array.
+  - Connects to a TCP server (host/port), identifies itself, and waits for test suites to execute.
+  - Sends the test suite code plus a `suiteId` to the server.
+  - Handles all messages received from the server.
 
 - **Server Side:**
-    - Listens for incoming TCP connections from any runner client(s).
-    - On receiving code to execute, runs it safely (e.g., in a Node.js VM).
-    - Exposes a `dispatch` function in the sandbox, allowing code to send test results or messages back to the client.
+  - Listens for incoming TCP connections from any runner client(s).
+  - On receiving code to execute, runs it safely (e.g., in a Node.js VM).
+  - Exposes a `dispatch` function in the sandbox, allowing code to send test results or messages back to the client.
 
 ## Step 1: Implement the TCP Client (“Runner”)
 
-Create a class implementing `TestRunnerInterface`. This class connects to your TCP server, sends test suites for execution, 
+Create a class implementing `TestRunnerInterface`. This class connects to your TCP server, sends test suites for execution,
 and receives messages (such as test results).
 
 Essential points:
+
 - Test suites are sent as single messages: the payload includes test suite code with a trailing `suiteId` for identification in case of execute error.
 - All messages sent and received use a 4-byte big-endian length prefix.
 - Handles partial/incomplete messages (buffering until a complete message is available).
 
 **Responsibilities:**
+
 - Manage a single TCP connection.
 - Provide `connect`, `dispatch`, and `disconnect` methods.
 
@@ -222,10 +224,11 @@ export class ClientProvider implements TestRunnerInterface {
 
 ## Step 2: Set Up the TCP Server
 
-The server receives test suite code and the suite identifier, 
+The server receives test suite code and the suite identifier,
 executes the code in a sandbox (using Node.js `vm` module), and forwards messages or results back to xJet using the connection.
 
 Essential server features:
+
 - Handles multiple simultaneous clients if needed.
 - Buffers incoming data and reconstructs complete messages using the 4-byte length header.
 - Extracts code and suite ID, then executes code using the Node.js VM.
