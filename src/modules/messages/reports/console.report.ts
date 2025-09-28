@@ -165,7 +165,7 @@ export class ConsoleReporter extends AbstractReporter {
 
     init(suites: Array<string>, runners: Array<RunnerInterface>): void {
         writeRaw(ANSI.HIDE_CURSOR);
-        writeRaw(ANSI.CLEAR_SCREEN_UP);
+        writeRaw(ANSI.CLEAR_SCREEN);
 
         this.suiteMap.clear();
         this.startTime = Date.now();
