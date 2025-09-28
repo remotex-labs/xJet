@@ -8,8 +8,8 @@
 
 ## Overview
 
-xJet is a powerful, flexible testing framework for JavaScript and TypeScript applications. 
-Its mission is to help you "Run Automated Tests Anywhere, Effortlessly".
+xJet is a powerful, flexible testing framework for JavaScript and TypeScript applications.
+Its mission is to help you "Run Automated Tests Anywhere, Effortlessly."
 
 ## Features
 
@@ -25,50 +25,63 @@ Its mission is to help you "Run Automated Tests Anywhere, Effortlessly".
 npm install @remotex-labs/xjet
 ```
 
-## Usage
+## 🚀 Quick Start
 
-### Basic Test Example
+Create a test file and start writing tests immediately:
 
 ```ts
 // example.test.ts 
-describe('Calculator', () => { test('should add two numbers correctly', () => { 
-    const result = 1 + 2; expect(result).toBe(3); 
-});
+describe('Calculator', () => { 
+    test('should add two numbers correctly', () => { 
+        const result = 1 + 2; expect(result).toBe(3); 
+    });
 
-it('should subtract two numbers correctly', () => { 
-    const result = 5 - 2; expect(result).toBe(3); }); 
+    it('should subtract two numbers correctly', () => { 
+        const result = 5 - 2; expect(result).toBe(3); 
+    }); 
 });
 ```
 
-### Running Tests
+## 📚 Documentation
 
-```bash
-xJet
-```
+For comprehensive guides and reference, check our [documentation](https://remotex-labs.github.io/xJet/):
+
+- [CLI Options](https://remotex-labs.github.io/xJet/configuration/cli)
+- [Test Structure](https://remotex-labs.github.io/xJet/tests/test)
+- [Mocking APIs](https://remotex-labs.github.io/xJet/mocks/mock)
+- [Timer Manipulation](https://remotex-labs.github.io/xJet/mocks/timer)
+- [Matchers Reference](https://remotex-labs.github.io/xJet/xjet-expect/equality)
 
 Run:
 
-![Run](./docs/src/public/images/run.png)
+![Run](./docs/public/images/run.png)
 
-![Run](./docs/src/public/images/run1.png)
+![Run](./docs/public/images/run1.png)
 
-![Run](./docs/src/public/images/run2.png)
-
+![Run](./docs/public/images/run2.png)
 
 ## Documentation
+
 For complete API documentation, examples, and guides, visit: [xJet Documentation](https://remotex-labs.github.io/xJet/)
 
-## Compatibility
+## 🔍 Compatibility
+
 - Node.js 20+
 - All modern browsers (via bundlers)
 - TypeScript 4.5+
 
-## Contributing
-Contributions are welcome!\
-Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+## 🤝 Contributing
 
-## License
-This project is licensed under the Mozilla Public License 2.0 see the [LICENSE](LICENSE) file for details.
+Contributions are welcome! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-## Acknowledgments
+## 📄 License
+
+This project is licensed under the Mozilla Public License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 💖 Acknowledgements
+
 - Built with TypeScript
+- Inspired by testing frameworks like Jest and Mocha
+- Powered by the esbuild ecosystem
+
+Made with ❤️ by the remotex-labs/xJet team
