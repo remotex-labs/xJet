@@ -1,7 +1,7 @@
 # Configuration File
 
-xJet supports configuration via a config file to conveniently manage all options for test discovery, 
-filtering, running, reporting, and build. 
+xJet supports configuration via a config file to conveniently manage all options for test discovery,
+filtering, running, reporting, and build.
 This file lets you define project-wide test behavior in a reusable, versioned way.
 
 > [!CAUTION] Configuration file
@@ -14,6 +14,7 @@ The configuration file should export (or set) an object.
 Most CLI options can also be set here, either at the top level or inside appropriate sections.
 
 ### Example: Minimal `config.xjet.ts`
+
 ```ts
 import type { xJetConfig } from '@remotex-labs/xjet';
 
@@ -102,9 +103,9 @@ export default {
 > Any custom CLI options defined using the `userArgv` section are automatically
 > integrated into xJet's argument parser (via yargs).
 
-When your custom runner’s `connect` method is called, the third parameter, `argv`, 
-contains all standard and user-defined CLI options. 
-This lets your runner access and respond to runtime arguments provided on 
+When your custom runner’s `connect` method is called, the third parameter, `argv`,
+contains all standard and user-defined CLI options.
+This lets your runner access and respond to runtime arguments provided on
 the command line without extra manual parsing.
 
 For example, if you run:

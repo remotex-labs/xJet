@@ -1,7 +1,7 @@
 # CLI Configuration
 
-The xJet test runner supports a comprehensive set of CLI options for test discovery, 
-execution, and reporting. Below is a guide to each available option, 
+The xJet test runner supports a comprehensive set of CLI options for test discovery,
+execution, and reporting. Below is a guide to each available option,
 which can be provided as command-line flags or specified via your configuration file.
 
 ## Configuration Precedence
@@ -12,7 +12,6 @@ which can be provided as command-line flags or specified via your configuration 
 - **Example:**
   If your configuration file contains: `"reporter": "json"`
 
-
 and you run:
 
 ```bash
@@ -20,7 +19,7 @@ and you run:
 ```
 
 Then the CLI will use the `"spec"` reporter, overriding the JSON reporter defined in your configuration file.
-This allows you to easily override defaults or shared settings from your configuration file for particular runs, 
+This allows you to easily override defaults or shared settings from your configuration file for particular runs,
 without modifying the file itself.
 
 ## Common CLI Options
@@ -44,7 +43,6 @@ without modifying the file itself.
 > [!CAUTION] Watch mode
 > :rocket: When enabled, watch mode will only re-run tests that are related to changes made in your project source files.
 
-
 ## Usage Examples
 
 **Running all tests with the default reporter:**
@@ -53,7 +51,7 @@ without modifying the file itself.
 xjet --files "**/*.test.ts"
 ```
 
-or 
+or
 
 ```bash
 xjet "**/*.test.ts"

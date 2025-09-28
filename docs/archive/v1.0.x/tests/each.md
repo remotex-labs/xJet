@@ -1,6 +1,6 @@
 # Each
 
-The `each` directive provides a powerful way to generate multiple test cases from data tables or argument lists, 
+The `each` directive provides a powerful way to generate multiple test cases from data tables or argument lists,
 enhancing your ability to run parameterized or data-driven tests.
 
 ## List of Arguments
@@ -41,8 +41,6 @@ test.each`
 
 Test names support advanced formatting:
 
-## Test Name Formatting
-
 | Notation         | Meaning                                               | Example (Input)     | Example (Result/Expr) |
 |------------------|-------------------------------------------------------|---------------------|-----------------------|
 | `%p`             | Pretty-format output                                  | `'value: %p'`       | `'value: [1,2,3]'`    |
@@ -57,8 +55,8 @@ Test names support advanced formatting:
 | `$variable.path` | Inject nested property value (`$user.info.id`)        | `'$user.id'`        | `'42'`                |
 | `$#`             | Index of the test case                                | `'row $#'`          | `'row 1'`             |
 
-
 > [!CAUTION] **Note:**
+>
 > - `$variable`, `$variable.path`, and `$#` interpolation works only with object-based test cases.
 > - `$variable` cannot be combined inside a `%` printf-format, except for `%%`.
 

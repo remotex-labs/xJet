@@ -1,12 +1,12 @@
 # Describe
 
-The `describe` directive is used to define and group related tests into tests, 
-providing structure, readability, and shared setup for your test specifications. 
+The `describe` directive is used to define and group related tests into tests,
+providing structure, readability, and shared setup for your test specifications.
 Several variants and modifiers exist to improve your workflow:
 
 ## `describe`
 
-Defines a group of related tests. 
+Defines a group of related tests.
 This function wraps test cases under a common context.
 
 **Example:**
@@ -21,7 +21,7 @@ describe('Calculator', () => {
 
 ## `describe.skip`
 
-Use `.skip` to mark an entire suite as skipped. 
+Use `.skip` to mark an entire suite as skipped.
 Skipped suites appear in test reports but are not executed.
 
 **Example:**
@@ -35,7 +35,8 @@ describe.skip('temporarily disabled suite', () => {
 ```
 
 ## `describe.only`
-Use `.only` to run only the marked suite and skip all others. 
+
+Use `.only` to run only the marked suite and skip all others.
 This is especially helpful during focused development or debugging.
 
 **Example:**
@@ -48,7 +49,7 @@ describe.only('run only this suite', () => {
 });
 ```
 
-> [!CAUTION] 
+> [!CAUTION]
 > If you mark more than one `describe` or test with `.only`, **all of them will be run** and all others will be skipped.
 
 ### How `.only` Works
@@ -59,7 +60,8 @@ describe.only('run only this suite', () => {
 
 ### Child Tests Inheritance
 
-When you apply `.only` to a `describe` block, **all child tests and nested describes inside it are included** for execution. If you nest `describe.only` inside another describe, only the path(s) with `.only` marker(s) will be run.
+When you apply `.only` to a `describe` block, **all child tests and nested describes inside it are included**
+for execution. If you nest `describe.only` inside another describe, only the path(s) with `.only` marker(s) will be run.
 
 ### Example
 
@@ -81,13 +83,14 @@ describe.only('products', () => {
 ```
 
 In the example above:
+
 - Both the `admins` and `products` suites (and all their inner tests) will be run.
 - The `guests` suite and its tests will be skipped.
 
 ## `describe.each`
 
-Creates parameterized/templated test suites. 
-This variant enables you to automatically repeat suites or specs with different input data, 
+Creates parameterized/templated test suites.
+This variant enables you to automatically repeat suites or specs with different input data,
 improving coverage and reducing repetition.
 
 You can use both arrays and template tables as shown below:

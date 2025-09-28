@@ -1,12 +1,12 @@
 # Test
 
-The `test` directive is used to define individual test cases. 
-Like `describe`, it supports several modifiers to enhance workflow, 
+The `test` directive is used to define individual test cases.
+Like `describe`, it supports several modifiers to enhance workflow,
 filter which tests are executed, and mark tests as pending or expected to fail.
 
 ## `test`
 
-Defines a single test with a description and an implementation. 
+Defines a single test with a description and an implementation.
 Accepts an optional timeout (in milliseconds).
 
 **Example:**
@@ -44,7 +44,7 @@ test.only('this will also run', () => {
 ```
 
 > [!NOTE]
-> If several `test.only` tests exist, all will run. 
+> If several `test.only` tests exist, all will run.
 > If used alongside `describe.only`, both `describe.only` and `test.only` will filter and run all their respective marked tests.
 
 ## `test.todo`
@@ -59,6 +59,7 @@ test.todo('write this later2', () => {
 ```
 
 ## `test.failing`
+
 Marks the test as expected to fail. Useful for documenting known issues or regressions.
 
 ```ts
