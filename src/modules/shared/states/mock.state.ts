@@ -200,16 +200,28 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     }
 
     /**
-     * Retrieves the current state of mocks.
+     * Retrieves the current state of the mock function.
      *
-     * @return The current state of the mocks.
+     * @remarks
+     * The `mock` getter provides read-only access to the complete state tracking information
+     * for the mock function. This includes all recorded invocations, return values, contexts,
+     * and other mock-related tracking data.
+     *
+     * Responsibilities:
+     * - Providing access to recorded function calls via {@link MocksStateInterface.calls}
+     * - Tracking invocation results through {@link MocksStateInterface.results}
+     * - Maintaining context information in {@link MocksStateInterface.contexts}
+     * - Recording instance creation in {@link MocksStateInterface.instances}
+     * - Preserving invocation order via {@link MocksStateInterface.invocationCallOrder}
+     *
+     * @returns A read-only view of the mock state tracking object.
+     *
      * @see MocksStateInterface
-     *
      * @since 1.0.0
      */
 
     get mock(): Readonly<MocksStateInterface<ReturnType, Args, Context>> {
-        return this.state;
+        return Object.freeze({ ...this.state });
     }
 
     /**
