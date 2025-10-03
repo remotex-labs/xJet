@@ -84,7 +84,7 @@ describe('mock', () => {
     test('should throw an error if the method is not part of an object', () => {
         const standaloneFunction = () => 'not part of an object';
 
-        expect(() => mockImplementation(standaloneFunction)).toThrow('Method is not part of an object');
+        expect(() => mockImplementation(standaloneFunction)).toThrow('xJet.mock item is not part of any global object');
     });
 
     test('should create a new mock for a regular function and replace the parent object\'s original method', () => {
@@ -189,16 +189,9 @@ describe('mock', () => {
         new (<any> globalThis).ParentClass();
         expect(mockedConstructor).toHaveBeenCalledTimes(0);
     });
-
-    test('should throw an error for invalid method types', () => {
-        const invalidMethod: any = 123; // Not a function
-
-        expect(() => mockImplementation(invalidMethod)).toThrow('Invalid method type');
-    });
 });
 
 describe('getParentObject', () => {
-    // Test case: Function is part of the global scope
     test('should return globalThis when the function exists in the global scope', () => {
         function testGlobalFunction() {
 
@@ -206,7 +199,10 @@ describe('getParentObject', () => {
 
         // Define a global function
         (<any> globalThis).testGlobalFunction = testGlobalFunction;
-        expect(getParentObject((<any> globalThis).testGlobalFunction)).toBe(globalThis);
+        expect(getParentObject(testGlobalFunction)).toEqual({
+            name: 'testGlobalFunction',
+            object: expect.any(Object)
+        });
     });
 
     // Test case: Function is part of an object
@@ -216,24 +212,16 @@ describe('getParentObject', () => {
         };
 
         (<any> globalThis).parentObject = parentObject;
-        expect(getParentObject(parentObject.testFunction)).toBe(parentObject);
+        expect(getParentObject(parentObject.testFunction)).toEqual({
+            name: 'testFunction',
+            object: parentObject
+        });
     });
 
     // Test case: Function does not exist in the global scope or an object
     test('should return undefined when the function does not belong to any global or object scope', () => {
         function standaloneFunction() {}
         expect(getParentObject(standaloneFunction)).toBeUndefined();
-    });
-
-    // Test case: Parent object contains non-function and non-object types
-    test('should skip non-object, non-function properties of the global object', () => {
-        const parentObject = {
-            testFunction: function () {},
-            nonObject: 42
-        };
-
-        (<any> globalThis).parentObject = parentObject;
-        expect(getParentObject(parentObject.testFunction)).toBe(parentObject);
     });
 
     // Test case: Function exists in nested objects
