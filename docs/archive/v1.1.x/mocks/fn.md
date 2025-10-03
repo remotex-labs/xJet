@@ -10,36 +10,6 @@ These mocks let you track calls, control behavior, and replace implementation lo
 - Swap between original and mocked behavior with `.mockRestore()`.
 - Support for both function-like and constructor-like mocks.
 
-::: warning
-Mock functions created with `xJet.fn()` are not automatically tracked by the global mock management utilities: `xJet.restoreAllMocks()`, `xJet.resetAllMocks()`, and `xJet.clearAllMocks()`.
-
-Additionally, when using `xJet.fn()` with object methods, it only creates a wrapped version of the method that can be mocked independently. It doesn't override the original method on the object. For example:
-
-```ts
-class Example {
-    method() {
-        console.log('original');
-    }
-}
-
-const instance = new Example();
-const mockMethod = xJet.fn(instance.method);
-
-// Calling the mock wrapper
-mockMethod(); // Prints: original
-
-// Mocking the implementation
-mockMethod.mockImplementation(() => {
-    console.log('mocked');
-});
-
-mockMethod(); // Prints: mocked
-instance.method(); // Still prints: original
-```
-
-To fully replace an object's method, consider using `xJet.spyOn()` or `xJet.mock()` with mock Implementation instead.
-:::
-
 ## Basic Function Mock
 
 ```ts
@@ -76,76 +46,6 @@ test('some test', () => {
     const mockInstance = new userMock('Alice');
     expect(mockInstance.sayHello()).toBe('Mocked Alice');
 });
-```
-
-## Restore Behavior
-
-The `xJet.fn()` utilities provide powerful restoration capabilities that allow you to 
-switch between mocked and original implementations during testing.
-
-```ts
-test('restore example', () => {
-    const double = (x: number) => x * 2;
-    const mockDouble = xJet.fn(double);
-    
-    // Override with mock implementation
-    mockDouble.mockImplementation(x => x + 10);
-    expect(mockDouble(5)).toBe(15);
-    
-    // Restore to original implementation
-    mockDouble.mockRestore();
-    expect(mockDouble(5)).toBe(10);
-});
-```
-
-### Custom Restore Functions
-
-You can provide a custom restore function that follows one of two patterns:
-
-#### 1. Restore with Side Effects (No Function Returns)
-
-If your custom restore function doesn't return a function, 
-the mock will revert to its original implementation:
-
-```ts
-const mockWithSideEffects = xJet.fn(
-    (x) => x * 2, // original implementation
-    () => { // custom restore function with side effects only
-        console.log('Custom restore called!');
-        // No return value, so mock will revert to original implementation
-    }
-);
-
-mockWithSideEffects.mockImplementation((x) => x * 3);
-mockWithSideEffects(5); // Returns: 15
-
-mockWithSideEffects.mockRestore(); 
-// Prints: "Custom restore called!"
-// Since restore() didn't return a function, mock reverts to original
-console.log(mockWithSideEffects(5)); // Returns: 10
-```
-
-#### 2. Restore with Implementation (Function Return)
-
-If your custom restore function returns a function, 
-that returned function becomes the new implementation:
-
-```ts
-const mockWithNewImpl = xJet.fn(
-    (x) => x * 2, // original implementation 
-    () => { // custom restore function that returns a new implementation
-        console.log('Restoring with new implementation!');
-        return (x): number => x * 4; // New implementation
-    }
-);
-
-mockWithNewImpl.mockImplementation((x) => x * 3);
-mockWithNewImpl(5); // Returns: 15
-
-mockWithNewImpl.mockRestore(); 
-// Prints: "Restoring with new implementation!"
-// Since restore() returned a function, that function becomes the new implementation
-console.log(mockWithNewImpl(5)); // Returns: 20 (using the new x * 4 implementation)
 ```
 
 ## API Overview
@@ -188,5 +88,5 @@ A mock created via `xJet.fn` (or `.mock`) exposes all `MockState` methods and pr
 
 ## See Also
 
-- [Mock](/mocks/mock)
 - [Spy API](/mocks/spy)
+- [Mock](/mocks/mock)

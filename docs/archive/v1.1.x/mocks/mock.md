@@ -1,16 +1,16 @@
-# xJet.mock – Mock Any Global Function, Method, Constructor, or Value
+# xJet.mock – Mock Any Global Function, Method, or Constructor
 
 The `xJet.mock()` utility enables you to replace existing global or object-bound functions,
-class methods, constructors, or even primitive values with powerful, controllable mocks.
+class methods, or constructors with powerful, controllable mocks.
 This allows you to intercept invocations, inspect arguments/results,
 return custom values, and later restore the original behavior seamlessly.
 
 ## What Does xJet.mock Do?
 
-- **Swaps out** an existing function, constructor, or value with a controllable mock.
-- **Tracks** calls, arguments, results, and instances (for functions and constructors).
+- **Swaps out** an existing function or constructor with a controllable mock.
+- **Tracks** calls, arguments, results, and instances.
 - **Customizes** behavior: supply new logic (mock implementation), return values, or errors.
-- **Restores** the original implementation or value at any time.
+- **Restores** the original implementation at any time.
 
 ## Mocking a Regular Function
 
@@ -53,38 +53,6 @@ test('some test', () => {
     expect(real.name).toBe('Alice');
 });
 ```
-
-## Mocking Primitive Values and Properties
-
-You can also mock primitive values on objects:
-
-```ts
-// config.ts
-
-export const config = { apiUrl: 'https://api.example.com', timeout: 5000 };
-```
-
-```ts
-import { config } from './config';
-
-test('config override', () => {
-    const mockConfig = xJet.mock(config, () => ({
-        apiUrl: 'https://test-api.example.com',
-        timeout: 10000
-    }));
-
-    expect(config.apiUrl).toBe('https://test-api.example.com');
-
-    apiUrlMock.mockRestore();
-    expect(config.apiUrl).toBe('https://api.example.com');
-});
-
-```
-
-::: warning
-Important: `xJet.mock()` does not work with object properties like `config.apiUrl`.
-For mocking object properties or methods, use `xJet.spyOn()` instead.
-:::
 
 ## Mocking Global/Static Methods
 
