@@ -57,9 +57,14 @@ export function getParentObject(fn: FunctionLikeType): Record<string, unknown> |
  * @returns A mocked function interface with the specified behaviors.
  *
  * @remarks
- * This function creates a mock function handler, typically used in testing scenarios.
- * You can provide an implementation for the mock behavior or specify a restore
- * handler for resetting the mock's state.
+ * The `fnImplementation` function creates a mock function handler, typically used in testing scenarios.
+ * It transforms regular functions into mockable objects that can be monitored and controlled.
+ *
+ * Responsibilities:
+ * - Creating mock functions with custom implementations
+ * - Supporting restore functionality for resetting mocks
+ * - Providing type-safe mock interfaces via {@link FnMockInterface}
+ * - Integrating with the {@link MockState} system
  *
  * @example
  * ```ts
@@ -73,6 +78,8 @@ export function getParentObject(fn: FunctionLikeType): Record<string, unknown> |
  * ```
  *
  * @see MockState
+ * @see FnMockInterface
+ * @see FunctionLikeType
  *
  * @since 1.0.0
  */
@@ -81,9 +88,7 @@ export function fnImplementation<ReturnType, Args extends Array<unknown>, Contex
     implementation?: FunctionLikeType<ReturnType, Args, Context>,
     restore?: FunctionLikeType<void>
 ): FnMockInterface<ReturnType, Args, Context> {
-    const instance = new MockState(implementation, restore, 'xJet.fn()');
-
-    return <FnMockInterface<ReturnType, Args, Context>> instance;
+    return new MockState(implementation, restore, 'xJet.fn()') as FnMockInterface<ReturnType, Args, Context>;
 }
 
 /**
