@@ -72,17 +72,26 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     private state: MocksStateInterface<ReturnType, Args, Context>;
 
     /**
-     * A private function that restores the mocks original implementation.
-     * It resets the mock to its initial state, typically used when restoring
-     * the mock after a call to `mockReset` or `mockRestore`.
+     * A private function that restores the mock's original implementation.
      *
-     * This function is invoked internally to ensure that the mock behaves as
-     * originally defined before any changes were made to its behavior or implementation.
+     * @remarks
+     * The `restore` function is responsible for resetting the mock to its initial state.
+     * It works in conjunction with methods like `mockReset` and `mockRestore` to ensure
+     * proper restoration of the mock's behavior.
      *
-     * @since v1.0.0
+     * Responsibilities:
+     * - Returning the original implementation when restoring the mock
+     * - Ensuring consistent reset behavior across mock operations
+     * - Supporting the {@link mockRestore} method's functionality
+     * - Maintaining mock state integrity during restoration
+     *
+     * @see MockState.mockRestore
+     * @see MockState.originalImplementation
+     *
+     * @since 1.2.0
      */
 
-    private readonly restore: FunctionLikeType<void>;
+    private readonly restore?: () => FunctionLikeType<ReturnType, Args, Context> | void;
 
     /**
      * A private array that stores the implementations queued to be executed
@@ -162,15 +171,17 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
      * @since 1.0.0
      */
 
-    constructor(implementation?: FunctionLikeType<ReturnType, Args, Context>, restore?: FunctionLikeType<void>, name?: string) {
+    constructor(
+        implementation?: FunctionLikeType<ReturnType, Args, Context>,
+        restore?: () => FunctionLikeType<ReturnType, Args, Context> | void,
+        name?: string
+    ) {
         super();
         this.name = name ?? DEFAULT_MOCK_NAME;
         this.state = this.initState();
         this.implementation = implementation;
-        this.restore = restore ? restore : (): void => {
-            this.implementation = implementation;
-        };
 
+        this.restore = restore;
         this.originalImplementation = implementation || ((): ReturnType => undefined as unknown as ReturnType);
 
         return <this> new Proxy(this, {
@@ -294,8 +305,10 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
      */
 
     mockRestore(): this {
-        this.restore();
         this.mockReset();
+        const restore = this.restore?.();
+        if(typeof restore === 'function') this.implementation = restore;
+        else this.implementation = this.originalImplementation;
 
         const index = MockState.mocks.indexOf(<MockState> <unknown> this);
         if (index !== -1) {
