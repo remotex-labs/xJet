@@ -100,7 +100,7 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
 
     /**
      * A private property that holds the current implementation of the mock function.
-     * This function is executed whenever the mock is invoked, and can be changed
+     * This function is executed whenever the mock is invoked and can be changed
      * using methods like `mockImplementation` or `mockImplementationOnce`.
      *
      * The `implementation` allows for customizing the behavior of the mock,
@@ -255,7 +255,7 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
      * @returns The current instance of the mock, allowing for method chaining.
      *
      * @remarks
-     * The `mockReset` method clears all invocation data and results by calling `mockClear()`, and also resets
+     * The `mockReset` method clears all invocation data and results by calling `mockClear()` and also resets
      * the queued implementations,
      * removing any previously queued behavior set by methods like `mockImplementationOnce`.
      * This ensures that the mock is in a clean state and ready for new invocations or configurations.
@@ -308,9 +308,9 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     /**
      * Retrieves the mock implementation for a function, if available.
      *
-     * @template ReturnType The type of the return value of the function.
+     * @template ReturnType The type the return value of the function.
      * @template Context The type of the `this` context for the function.
-     * @template Args The type of the argument(s) of the function.
+     * @template Args The type the argument(s) of the function.
      *
      * @return A function matching `FunctionLikeType` that represents the mock implementation,
      * or `undefined` if no implementation is set.
@@ -537,7 +537,7 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
      * // Set default return value
      * mockFn.mockReturnValue('Default Value');
      *
-     * // Set one-time return value for the next call
+     * // Set a one-time return value for the next call
      * mockFn.mockReturnValueOnce('First Call');
      * mockFn.mockReturnValueOnce('Second Call');
      *
@@ -611,7 +611,7 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
      * // Set default rejected value
      * mockFn.mockRejectedValue('Default Error');
      *
-     * // Set one-time rejected value for the next call
+     * // Set a one-time rejected value for the next call
      * mockFn.mockRejectedValueOnce('First Call Error');
      *
      * mockFn().catch(error => {
