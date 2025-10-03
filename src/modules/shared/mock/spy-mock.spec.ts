@@ -9,7 +9,8 @@ import type { FunctionType } from '@remotex-labs/xjet-expect';
  */
 
 import { MockState } from '@shared/states/mock.state';
-import { spyOnImplementation, spyOnDescriptorProperty } from '@shared/mock/spy.mock';
+import { spyOnImplementation } from '@shared/mock/spy.mock';
+import { mockDescriptorProperty } from '@shared/mock/fn.mock';
 
 /**
  * Tests
@@ -24,7 +25,7 @@ describe('spyOnDescriptorProperty', () => {
     });
 
     test('should mock the getter of the property', () => {
-        const mockState = spyOnDescriptorProperty(mockObject, 'myProperty');
+        const mockState = mockDescriptorProperty(mockObject, 'myProperty');
 
         // Ensure the getter returns the MockState value
         mockState.mockReturnValueOnce('mocked value');
@@ -33,7 +34,7 @@ describe('spyOnDescriptorProperty', () => {
     });
 
     test('should mock the setter of the property', () => {
-        const mockState = spyOnDescriptorProperty(mockObject, 'myProperty');
+        const mockState = mockDescriptorProperty(mockObject, 'myProperty');
 
         // Assign a new value to the property
         mockObject.myProperty = 'new value';
@@ -43,7 +44,7 @@ describe('spyOnDescriptorProperty', () => {
 
     test('should revert mocked property when cleaned up', () => {
         const originalDescriptor = Object.getOwnPropertyDescriptor(mockObject, 'myProperty');
-        const mockState = spyOnDescriptorProperty(mockObject, 'myProperty');
+        const mockState = mockDescriptorProperty(mockObject, 'myProperty');
 
         // Clean up
         mockState.mockRestore();

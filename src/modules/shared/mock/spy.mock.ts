@@ -11,45 +11,136 @@ import type { ConstructorKeysType, KeysExtendingConstructorType } from '@shared/
 
 import { MockState } from '@shared/states/mock.state';
 import { ExecutionError } from '@shared/errors/execution.error';
+import { getParentObject, mockDescriptorProperty } from '@shared/mock/fn.mock';
+
+export const proxyRegistry = new WeakMap<object, {
+    proxy: unknown;
+    spies: Map<PropertyKey, MockState>;
+}>();
 
 /**
- * Intercepts and mocks the property descriptor of a specified property on a target object.
+ * Checks if a property on an object is provided via a proxy mechanism rather than directly defined.
  *
- * @template Target - The target object type.
- * @template Key - The key of the property to be mocked.
+ * @template T - The type of object being checked
  *
- * @param target - The object whose property descriptor is being intercepted and mocked.
- * @param key - The property key on the target object to spy on.
- * @return A `MockState` instance that provides control over the mocked property and its interactions.
+ * @param obj - The object to inspect
+ * @param key - The property key to check on the object
+ * @returns `true` if the property is provided by a proxy, `false` if directly defined
  *
  * @remarks
- * This function replaces the property's getter and setter to allow interception and testing of their behavior.
- * A `MockState` instance is returned to control and observes mocked behavior.
+ * This function determines whether a property on an object is being provided through
+ * a proxy mechanism (like a Proxy object or getter) rather than being directly defined
+ * on the object itself. It works by checking if the key doesn't exist in the object's
+ * own properties while still returning a non-undefined value when accessed.
  *
- * @since 1.0.0
+ * This is useful for:
+ * - Detecting dynamically created properties
+ * - Identifying properties provided via getters or proxies
+ * - Distinguishing between direct properties and inherited/proxied ones
+ *
+ * @example
+ * ```ts
+ * // Regular object with direct property
+ * const directObj = { name: 'Test' };
+ * console.log(isProxyProperty(directObj, 'name')); // false
+ *
+ * // Object with proxy property
+ * const handler = {
+ *   get(target, prop) {
+ *     if (prop === 'dynamic') return 'This is dynamic';
+ *     return target[prop];
+ *   }
+ * };
+ * const proxyObj = new Proxy({}, handler);
+ * console.log(isProxyProperty(proxyObj, 'dynamic')); // true
+ * ```
+ *
+ * @since 1.2.0
  */
 
-export function spyOnDescriptorProperty<Target, Key extends keyof Target>(target: Target, key: Key): MockState<Target[Key], []> {
-    const original = target[key];
-    const originalDescriptor = Object.getOwnPropertyDescriptor(target, key) || {};
-    const mockInstance = new MockState(() => original, () => {
-        target[key] = originalDescriptor.value;
-        Object.defineProperty(target, key, originalDescriptor);
-    }, 'xJet.spyOn()');
+export function isProxyProperty<T extends object>(obj: T, key: keyof T): boolean {
+    return !(key in obj) && Reflect.get(obj, key) !== undefined;
+}
 
-    MockState.mocks.push(mockInstance);
-    Object.defineProperty(target, key, {
-        get() {
-            return mockInstance.apply(this, []);
-        },
-        set(value: unknown) {
-            mockInstance.mockImplementation(() => <Target[Key]> value);
+/**
+ * Creates a spy on a property accessed via a proxy getter, allowing interception
+ * and monitoring of property access operations.
+ *
+ * @template T - The type of the target object containing the proxy
+ * @template K - The type of property key being spied on
+ *
+ * @param target - The object containing the property to spy on
+ * @param key - The property key to intercept access to
+ * @param method - The method to execute when the property is accessed
+ * @returns A {@link MockState} instance that tracks interactions with the property
+ *
+ * @throws Error - If the target is not part of any global object
+ *
+ * @example
+ * ```ts
+ * // Create an object with dynamic property access
+ * const user = new Proxy({}, {
+ *   get(target, prop) {
+ *     if (prop === 'name') return 'John';
+ *     return target[prop];
+ *   }
+ * });
+ *
+ * // Spy on the 'name' property
+ * const nameSpy = spyOnProxyGet(user, 'name', () => 'Jane');
+ *
+ * // Now accessing user.name returns 'Jane' and the access is tracked
+ * console.log(user.name); // 'Jane'
+ * expect(nameSpy).toHaveBeenCalled();
+ *
+ * // Restore original behavior
+ * nameSpy.mockRestore();
+ * console.log(user.name); // 'John'
+ * ```
+ *
+ * @see MockState
+ * @see getParentObject
+ *
+ * @since 1.2.0
+ */
 
-            return mockInstance.apply(this, [ value ]);
-        }
-    });
+export function spyOnProxyGet<T extends object, K extends keyof T>(target: T, key: K, method: unknown): MockState {
+    const parent = getParentObject(target);
+    if (!parent) {
+        throw new Error('xJet.spyOn item is not part of any global object');
+    }
 
-    return mockInstance;
+    let entry = proxyRegistry.get(target);
+    if (!entry) {
+        entry = {
+            proxy: null,
+            spies: new Map<PropertyKey, MockState>()
+        };
+
+        entry.proxy = new Proxy(target, {
+            get(orig, prop, receiver): unknown {
+                if (entry!.spies.has(prop)) {
+                    return entry!.spies.get(prop)!();
+                }
+
+                return Reflect.get(orig, prop, receiver);
+            }
+        });
+
+        proxyRegistry.set(target, entry);
+        Reflect.set(parent.object, parent.name, entry.proxy);
+    }
+
+    const fn = method as FunctionLikeType;
+    const mockState = new MockState(fn, () => {
+        entry!.spies.delete(key);
+        Reflect.set(parent.object, parent.name, target);
+    }, 'xJet.spyOn(Proxy#get)');
+
+    MockState.mocks.push(mockState);
+    entry.spies.set(key, mockState);
+
+    return mockState;
 }
 
 /**
@@ -251,32 +342,18 @@ export function spyOnImplementation<T extends object, K extends keyof T>(target:
     if (key === null)
         throw new ExecutionError('Spied property/method key is required');
 
+    if (isProxyProperty(target, key))
+        return spyOnProxyGet(target, key, Reflect.get(target, key));
+
     if (!(key in target))
         throw new ExecutionError(`Property/method '${ String(key) }' does not exist on target`);
 
     const method = <MockState | T[K]> Reflect.get(target, key);
-    const targetObject = target as T & { default: T };
+    if (!method) throw new Error(`Property '${ String(key) }' does not exist in the provided object`);
+    if ((<MockState> method).xJetMock)  return <MockState> method;
 
-    if (!method)
-        throw new Error(`Property '${ String(key) }' does not exist in the provided object`);
-
-    if((<MockState> method).xJetMock) {
-        return <MockState> method;
-    }
-
-    let descriptor = Object.getOwnPropertyDescriptor(target, key);
-    if (descriptor?.get && !descriptor.configurable) {
-        if ('default' in targetObject && targetObject.default[key] === method) {
-            target = targetObject.default;
-            descriptor = Object.getOwnPropertyDescriptor(target, key);
-        } else {
-            throw new Error(`Property '${ String(key) }' is not configurable in an getter object`);
-        }
-    }
-
-    if (typeof method !== 'function' || descriptor?.get) {
-        return spyOnDescriptorProperty(target, key);
-    }
+    const descriptor = Object.getOwnPropertyDescriptor(target, key);
+    if (typeof method !== 'function' || descriptor?.get) return mockDescriptorProperty(target, key);
 
     let fn: FunctionLikeType = method as FunctionLikeType;
     const protoDesc = Object.getOwnPropertyDescriptor(fn, 'prototype');
