@@ -80,7 +80,7 @@ test('some test', () => {
 
 ## Restore Behavior
 
-The `xJet.fn()` utilities provide powerful restoration capabilities that allow you to 
+The `xJet.fn()` utilities provide powerful restoration capabilities that allow you to
 switch between mocked and original implementations during testing.
 
 ```ts
@@ -104,7 +104,7 @@ You can provide a custom restore function that follows one of two patterns:
 
 #### 1. Restore with Side Effects (No Function Returns)
 
-If your custom restore function doesn't return a function, 
+If your custom restore function doesn't return a function,
 the mock will revert to its original implementation:
 
 ```ts
@@ -127,7 +127,7 @@ console.log(mockWithSideEffects(5)); // Returns: 10
 
 #### 2. Restore with Implementation (Function Return)
 
-If your custom restore function returns a function, 
+If your custom restore function returns a function,
 that returned function becomes the new implementation:
 
 ```ts
