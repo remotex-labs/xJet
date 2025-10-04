@@ -80,6 +80,6 @@
         "@remotex-labs/xmap": "^4.0.2",
         "@remotex-labs/xansi": "^1.3.3",
         "@remotex-labs/xstruct": "^2.0.0",
-        "@remotex-labs/xjet-expect": "^2.1.0"
+        "@remotex-labs/xjet-expect": "^2.1.2"
     }
 }
