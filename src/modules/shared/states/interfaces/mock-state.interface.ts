@@ -1,4 +1,10 @@
 /**
+ * Import will remove at compile time
+ */
+
+import type { FunctionLikeType, FunctionType } from '@remotex-labs/xjet-expect';
+
+/**
  * Represents the possible result types of a mock function invocation.
  *
  * @template 'return' | 'throw' | 'incomplete'
@@ -63,7 +69,7 @@ export interface MockInvocationResultInterface<T> {
  * @since 1.0.0
  */
 
-export interface MocksStateInterface<ReturnType, Args extends Array<unknown> = [], Context = unknown> {
+export interface MocksStateInterface<F extends FunctionType> {
     /**
      * An array that holds the arguments for each invocation made to the mock.
      * Each entry corresponds to the arguments passed during a single call to the mock function.
@@ -71,7 +77,7 @@ export interface MocksStateInterface<ReturnType, Args extends Array<unknown> = [
      * @since 1.0.0
      */
 
-    calls: Array<Args>;
+    calls: Array<Parameters<F>>;
 
     /**
      * The arguments passed to the mock during its most recent invocation.
@@ -80,7 +86,7 @@ export interface MocksStateInterface<ReturnType, Args extends Array<unknown> = [
      * @since 1.0.0
      */
 
-    lastCall?: Args;
+    lastCall?: Parameters<F>;
 
     /**
      * An array of contexts (`this` values) for each invocation made to the mock.
@@ -89,7 +95,7 @@ export interface MocksStateInterface<ReturnType, Args extends Array<unknown> = [
      * @since 1.0.0
      */
 
-    contexts: Array<Context>;
+    contexts: Array<ThisParameterType<F>>;
 
     /**
      * An array of all object instances created by the mock.
@@ -98,7 +104,7 @@ export interface MocksStateInterface<ReturnType, Args extends Array<unknown> = [
      * @since 1.0.0
      */
 
-    instances: Array<Context>;
+    instances: Array<ThisParameterType<F>>;
 
     /**
      * An array of invocation order indices for the mock.
@@ -116,5 +122,39 @@ export interface MocksStateInterface<ReturnType, Args extends Array<unknown> = [
      * @since 1.0.0
      */
 
-    results: Array<MockInvocationResultInterface<ReturnType>>;
+    results: Array<MockInvocationResultInterface<ReturnType<F>>>;
 }
+
+/**
+ * A utility type that extracts the signature of a function and allows it to be reused in an implementation.
+ *
+ * @remarks
+ * This type creates a representation of a function's signature based on its return type, parameters, and
+ * `this` context. It's particularly useful for creating mock implementations, decorators, or wrappers
+ * that need to maintain the same signature as the original function.
+ *
+ * By using this type, you can ensure type safety when implementing functions that need to match
+ * an existing function's signature exactly, including its return type, parameter types, and `this` binding.
+ *
+ * @typeParam F - The original function type to extract the signature from
+ *
+ * @example
+ * ```ts
+ * // Original function
+ * function greet(name: string): string {
+ *   return `Hello, ${name}!`;
+ * }
+ *
+ * // Implementation with the same signature
+ * const mockGreet: ImplementationType<typeof greet> = function(name) {
+ *   return `Mocked greeting for ${name}`;
+ * };
+ *
+ * // Both functions now have the exact same type signature
+ * ```
+ *
+ * @since 1.2.2
+ */
+
+export type ImplementationType<F extends FunctionType> =
+    FunctionLikeType<ReturnType<F>, Parameters<F>, ThisParameterType<F>>

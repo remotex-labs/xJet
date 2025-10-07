@@ -123,14 +123,14 @@ describe('MockState Class', () => {
     });
 
     test('should set a resolved value using mockResolvedValue', async () => {
-        const mockState = new MockState<Promise<string>>();
+        const mockState = new MockState<() => Promise<string>>();
         mockState.mockResolvedValue('resolved value');
 
         await expect(mockState()).resolves.toBe('resolved value');
     });
 
     test('should queue a one-time resolved value using mockResolvedValueOnce', async () => {
-        const mockState = new MockState<Promise<string>>();
+        const mockState = new MockState<() => Promise<string>>();
         mockState.mockResolvedValueOnce('first resolve');
         mockState.mockResolvedValueOnce('second resolve');
 
@@ -140,14 +140,14 @@ describe('MockState Class', () => {
     });
 
     test('should set a rejected value using mockRejectedValue', async () => {
-        const mockState = new MockState<Promise<string>>();
+        const mockState = new MockState<() => Promise<string>>();
         mockState.mockRejectedValue('rejected value');
 
         await expect(mockState()).rejects.toBe('rejected value');
     });
 
     test('should queue a one-time rejected value using mockRejectedValueOnce', async () => {
-        const mockState = new MockState<Promise<string>>();
+        const mockState = new MockState<() => Promise<string>>();
         mockState.mockRejectedValueOnce('first reject');
         mockState.mockRejectedValueOnce('second reject');
 
@@ -157,7 +157,7 @@ describe('MockState Class', () => {
     });
 
     test('should track calls and their order', () => {
-        const mockState = new MockState<string, any, [string, number]>();
+        const mockState = new MockState<(arg1: string, arg2: number) => string>();
         mockState('arg1', 1);
         mockState('arg2', 2);
 
@@ -212,7 +212,6 @@ describe('MockState Class', () => {
         const mockState = <ConstructorLikeType<any, any> & MockState> <unknown> new MockState(() => new TestClass());
         const result = <TestClass> new mockState('arg1');
 
-        // Because the implementation returns a primitive value, invokeClass should return newTarget
         expect(result.test()).toBe(42);
         expect(result).toBeInstanceOf(TestClass);
         expect(mockState.mock.contexts).toContain(mockState);

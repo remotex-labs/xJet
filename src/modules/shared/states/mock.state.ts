@@ -3,8 +3,9 @@
  */
 
 import type { BoundInterface } from '@shared/components/interfaces/polyfill-component.interface';
-import type { FunctionLikeType, RejectedValueType, ResolvedValueType } from '@remotex-labs/xjet-expect';
-import type { MockInvocationResultInterface, MocksStateInterface } from './interfaces/mock-state.interface';
+import type { FunctionType, RejectedValueType, ResolvedValueType } from '@remotex-labs/xjet-expect';
+import type { MockInvocationResultInterface } from '@shared/states/interfaces/mock-state.interface';
+import type { ImplementationType, MocksStateInterface } from '@shared/states/interfaces/mock-state.interface';
 
 /**
  * @template DEFAULT_MOCK_NAME
@@ -22,25 +23,49 @@ import type { MockInvocationResultInterface, MocksStateInterface } from './inter
 const DEFAULT_MOCK_NAME = 'xJet.mock()';
 
 /**
- * A class representing the mock state for tracking and managing the behavior of mocked functions or classes.
+ * A powerful mock state manager for simulating functions and classes in tests.
  *
- * @template ReturnType - The type of value returned by the mock function.
- * @template Context - The type representing the context (`this` value) used in the mock function.
- * @template Args - The types of arguments for the mocked function.
+ * @template F - The function signature being mocked, defaults to any function
  *
  * @remarks
- * This class provides mechanisms to customize and manage the behavior of mocked functions or constructors.
- * It tracks invocation details, allows for behavior customization, and enables resetting or restoring the mock to its original state.
+ * MockState provides a complete mocking solution. It tracks
+ * all invocations, including arguments, return values, and contexts, while also allowing
+ * customization of behavior through various methods like `mockImplementation` and
+ * `mockReturnValue`.
  *
- * @since v1.0.0
+ * Key features:
+ * - Tracks call arguments, return values, and execution contexts
+ * - Supports one-time implementations and return values
+ * - Manages Promise resolutions and rejections
+ * - Provides methods for resetting or restoring mock state
+ * - Preserves the interface of the original function
+ *
+ * @example
+ * ```ts
+ * // Create a basic mock
+ * const mockFn = new MockState();
+ *
+ * // Configure return values
+ * mockFn.mockReturnValue('default');
+ * mockFn.mockReturnValueOnce('first call');
+ *
+ * // Use the mock
+ * console.log(mockFn()); // 'first call'
+ * console.log(mockFn()); // 'default'
+ *
+ * // Inspect calls
+ * console.log(mockFn.mock.calls); // [[], []]
+ * ```
+ *
+ * @since 1.0.0
  */
 
-export class MockState<ReturnType = unknown, Args extends Array<unknown> = unknown[], Context = unknown> extends Function {
+export class MockState<F extends FunctionType = FunctionType> extends Function {
     /**
-     * List of all mocks that created
+     * List of all mocks that created as WeakRef
      */
 
-    static mocks: Array<MockState> = [];
+    static mocks: Set<WeakRef<MockState>> = new Set();
 
     /**
      * The `name` property represents the name of the mock function.
@@ -55,215 +80,222 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     readonly xJetMock: boolean = true;
 
     /**
-     * The `state` property holds the detailed state of the mock invocations.
-     * It tracks information such as the arguments passed, the results returned, the context (`this` value) used,
-     * the instances created, and the order of invocations.
-     * This data is automatically updated after each call to the mock.
-     *
-     * @template ReturnType - The type of value returned by the mock function.
-     * @template Context - The type representing the context (`this` value) used in the mock function.
-     * @template Args - The types of arguments for the mocked function.
-     *
-     * @see MocksStateInterface
-     *
-     * @since v1.0.0
-     */
-
-    private state: MocksStateInterface<ReturnType, Args, Context>;
-
-    /**
-     * A private function that restores the mock's original implementation.
+     * Holds the current state of the mock, including all invocation records.
      *
      * @remarks
-     * The `restore` function is responsible for resetting the mock to its initial state.
-     * It works in conjunction with methods like `mockReset` and `mockRestore` to ensure
-     * proper restoration of the mock's behavior.
+     * This property tracks the complete history of the mock's usage, storing
+     * information like call arguments, return values, execution contexts,
+     * instances, and the order of invocations.
      *
-     * Responsibilities:
-     * - Returning the original implementation when restoring the mock
-     * - Ensuring consistent reset behavior across mock operations
-     * - Supporting the {@link mockRestore} method's functionality
-     * - Maintaining mock state integrity during restoration
-     *
-     * @see MockState.mockRestore
-     * @see MockState.originalImplementation
-     *
-     * @since 1.2.0
-     */
-
-    private readonly restore?: () => FunctionLikeType<ReturnType, Args, Context> | void;
-
-    /**
-     * A private array that stores the implementations queued to be executed
-     * for future invocations of the mock.
-     * Each function in this array is invoked in sequence when the mock function is called,
-     * with the first queued implementation being used on the first call, the second on the second call, and so on.
-     *
-     * This property is used in conjunction with methods like `mockImplementationOnce`
-     * to specify different behaviors for consecutive calls to the mock.
-     *
-     * @since v1.0.0
-     */
-
-    private queuedImplementations: Array<FunctionLikeType<ReturnType, Args, Context>> = [];
-
-    /**
-     * A private property that holds the current implementation of the mock function.
-     * This function is executed whenever the mock is invoked and can be changed
-     * using methods like `mockImplementation` or `mockImplementationOnce`.
-     *
-     * The `implementation` allows for customizing the behavior of the mock,
-     * such as returning specific values, throwing errors, or performing actions.
-     *
-     * @since v1.0.0
-     */
-
-    private implementation: FunctionLikeType<ReturnType, Args, Context> | undefined;
-
-    /**
-     * A private property that holds the original implementation of the mock function.
-     * This is the initial function passed to the constructor that defines the mock's default behavior
-     * before any customization.
-     *
-     * @template ReturnType - The type of value returned by the original function.
-     * @template Args - The types of arguments for the original function.
-     * @template Context - The type representing the context (`this` value) used in the original function.
-     *
-     * @remarks
-     * This property stores the initial implementation provided when creating the mock.
-     * If no implementation is provided during construction, it defaults to a function
-     * that returns `undefined` cast to the appropriate return type.
-     * Unlike `implementation` which can be modified, this property maintains a reference
-     * to the original function for scenarios where the original behavior needs to be preserved
-     * or restored.
-     *
-     * @see FunctionLikeType
-     * @see MockState.original
+     * It's initialized with empty arrays for tracking and gets updated with
+     * each invocation. This state is what powers the inspection capabilities
+     * accessible via the public `mock` getter.
      *
      * @since 1.0.0
      */
 
-    private readonly originalImplementation: FunctionLikeType<ReturnType, Args, Context>;
+    private state: MocksStateInterface<F>;
 
     /**
-     * Constructs a mock object that allows custom implementation, restore capability,
-     * and optional naming functionality. This mock is proxied to handle function invocation
-     * and class instantiation.
-     *
-     * @template ReturnType - The type of the value returned by the mock function.
-     * @template Context - The type of the context (`this`) for the mock function.
-     * @template Args - The type of arguments accepted by the mock function.
-     *
-     * @param implementation - Optional implementation for the mock function.
-     * @param restore - Optional function to restore the mock to its initial state. Defaults to resetting to the provided implementation.
-     * @param name - Optional name for the mock instance. Default to a predefined mock name if not provided.
-     *
-     * @returns A proxied mock object capable of behaving as a callable function or a constructible class.
+     * Stores one-time implementations to be used on successive invocations.
      *
      * @remarks
-     * The mock object can work as both a function and a class, using JavaScript's Proxy API. The restore functionality
-     * allows resetting to the original state or implementation. If no implementation is provided, the mock remains uninitialized
-     * but still functional.
+     * This queue contains functions that will be consumed in FIFO order
+     * (first-in, first-out) when the mock is called. Each implementation
+     * is used exactly once and then removed from the queue.
      *
-     * @see FunctionLikeType
-     * @see VoidFunctionType
+     * When adding implementations with `mockImplementationOnce()` or similar
+     * methods, they are pushed to this queue. On invocation, the mock will
+     * check this queue first, using and removing the oldest implementation
+     * if available, or falling back to the default implementation.
      *
      * @since 1.0.0
      */
 
-    constructor(
-        implementation?: FunctionLikeType<ReturnType, Args, Context>,
-        restore?: () => FunctionLikeType<ReturnType, Args, Context> | void,
-        name?: string
-    ) {
+    private queuedImplementations: Array<ImplementationType<F>> = [];
+
+    /**
+     * The current default implementation for this mock.
+     *
+     * @remarks
+     * This property holds the function that will be executed when the mock is called,
+     * unless overridden by a queued one-time implementation. It can be set using
+     * the `mockImplementation()` method and retrieved with `getMockImplementation()`.
+     *
+     * If not explicitly set, it defaults to `undefined`, meaning the mock will
+     * return `undefined` when called (after any queued implementations are used).
+     *
+     * This implementation determines the behavior of the mock for all calls that
+     * don't have a specific one-time implementation in the queue.
+     *
+     * @since 1.0.0
+     */
+
+    private implementation: ImplementationType<F> | undefined;
+
+    /**
+     * Preserves the original implementation provided when creating the mock.
+     *
+     * @remarks
+     * This property stores the initial function passed to the constructor, allowing
+     * the mock to be restored to its original behavior later using `mockRestore()`.
+     *
+     * If no implementation was provided in the constructor, this will contain a
+     * function that returns `undefined` when called.
+     *
+     * The original implementation is immutable and serves as a reference point
+     * for resetting the mock to its initial state.
+     *
+     * @since 1.0.0
+     */
+
+    private readonly originalImplementation: ImplementationType<F>;
+
+    /**
+     * Optional cleanup function to be called when the mock is restored.
+     *
+     * @remarks
+     * If provided, this function will be executed when `mockRestore()` is called,
+     * allowing for custom cleanup operations. This is particularly useful when
+     * creating mocks that replace methods or properties on existing objects.
+     *
+     * The restore function should handle any necessary teardown, such as
+     * restoring original object properties, removing event listeners, or
+     * closing connections that were established during mock creation.
+     *
+     * @since 1.0.0
+     */
+
+    private readonly restore?: () => F | void;
+
+    /**
+     * Creates a new instance of a mock function.
+     *
+     * @template F - The function type being mocked. This generic type parameter allows
+     *               the mock to properly type-check parameters and return values to match
+     *               the function signature being mocked.
+     *
+     * @param implementation - The initial function implementation to use. If not provided,
+     *                         the mock will return `undefined` when called.
+     * @param restore - Optional cleanup function that will be called when `mockRestore()` is invoked.
+     *                  Useful for restoring original behavior when mocking existing object methods.
+     * @param name - Optional name for the mock function, used in error messages and test output.
+     *               Defaults to "xJet.fn()" if not provided.
+     *
+     * @remarks
+     * The constructor initializes the mock's state, implementation, and metadata.
+     * It returns a Proxy that allows the mock to be both a function and an object with properties.
+     *
+     * The Proxy intercepts:
+     * - Function calls (via `apply`)
+     * - Property access (via `get`)
+     * - Constructor calls with `new` (via `construct`)
+     *
+     * This enables the mock to track calls, return configured values, and provide
+     * helper methods for assertions and configuration.
+     *
+     * @see ReturnType
+     * @see ImplementationType
+     *
+     * @since 1.0.0
+     */
+
+    constructor(implementation?: F, restore?: () => F | void, name?: string) {
         super();
         this.name = name ?? DEFAULT_MOCK_NAME;
         this.state = this.initState();
-        this.implementation = implementation;
+        this.implementation = implementation || undefined;
 
         this.restore = restore;
-        this.originalImplementation = implementation || ((): ReturnType => undefined as unknown as ReturnType);
+        this.originalImplementation = implementation || ((): ReturnType<F> => <ReturnType<F>> undefined);
 
         return <this> new Proxy(this, {
+            get: this.invokeGet,
             apply: this.invokeFunction,
             construct: <ProxyHandler<object>['construct']> this.invokeClass
         });
     }
 
     /**
-     * todo remove it
-     * only for jest expect will support this mock
-     */
-
-    getMockName(): string {
-        return this.name;
-    }
-
-    /**
-     * Retrieves the current state of the mock function.
+     * Gets a readonly snapshot of the current mocks state.
+     *
+     * @template F - The function type being mocked.
+     *
+     * @returns A frozen (immutable) copy of the mock state {@link MocksStateInterface}, containing information
+     *          about calls, return values, and other tracking data.
      *
      * @remarks
-     * The `mock` getter provides read-only access to the complete state tracking information
-     * for the mock function. This includes all recorded invocations, return values, contexts,
-     * and other mock-related tracking data.
-     *
-     * Responsibilities:
-     * - Providing access to recorded function calls via {@link MocksStateInterface.calls}
-     * - Tracking invocation results through {@link MocksStateInterface.results}
-     * - Maintaining context information in {@link MocksStateInterface.contexts}
-     * - Recording instance creation in {@link MocksStateInterface.instances}
-     * - Preserving invocation order via {@link MocksStateInterface.invocationCallOrder}
-     *
-     * @returns A read-only view of the mock state tracking object.
+     * This property provides safe access to the mock's internal state for assertions and
+     * debugging purposes. The returned object is a deep copy with all properties frozen
+     * to prevent accidental modification of the mock's internal state.
      *
      * @see MocksStateInterface
+     *
      * @since 1.0.0
      */
 
-    get mock(): Readonly<MocksStateInterface<ReturnType, Args, Context>> {
+    get mock(): Readonly<MocksStateInterface<F>> {
         return Object.freeze({ ...this.state });
     }
 
     /**
-     * Returns the original implementation of the function that was instrumented
+     * Gets the original function implementation.
      *
-     * @returns The original function implementation that was wrapped or modified
+     * @template F - The function type being mocked.
+     *
+     * @returns The original function implementation that was provided when creating the mock
+     *          or a default implementation that returns undefined if none was provided.
      *
      * @remarks
-     * This getter provides access to the unmodified function that was originally passed
-     * to the instrumentation system. Useful for debugging, testing, or when you need
-     * to bypass the instrumented behavior temporarily.
+     * This property allows access to the original implementation that was stored
+     * when the mock was created. It's useful when you need to temporarily access
+     * or call the original behavior within test cases.
      *
      * @example
      * ```ts
-     * const mockFn = jest.fn(x => x * 2);
-     * // Later in test
-     * const originalImplementation = mockFn.original;
-     * expect(originalImplementation(5)).toBe(10);
-     * ```
+     * // Create a mock with an original implementation
+     * const originalFn = (x: number) => x * 2;
+     * const mockFn = xJet.fn(originalFn);
      *
-     * @see FunctionLikeType
+     * // Override the implementation for some tests
+     * mockFn.mockImplementation((x: number) => x * 3);
+     *
+     * // Call the original implementation directly when needed
+     * const result = mockFn.original(5); // Returns 10, not 15
+     * ```
      *
      * @since 1.0.0
      */
 
-    get original(): FunctionLikeType<ReturnType, Args, Context> {
-        return this.originalImplementation;
+    get original(): F {
+        return <F> this.originalImplementation;
     }
 
     /**
-     * Clears the `mock.calls`, `mock.results`, `mock.contexts`, `mock.instances`, and `mock.invocationCallOrder` properties.
+     * Clears all information stored in the mock's state {@link MocksStateInterface}.
      *
-     * @returns The current instance of the mock, allowing for method chaining.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * This method resets the state of the mock function, clearing all invocation data and results,
-     * ensuring that previous mock states do not affect the following tests.
-     * Equivalent to calling `.mockClear()` on every mocked function.
+     * This method resets all stored information such as tracked calls, return values,
+     * and other state information. It doesn't reset any custom implementations that
+     * were set using mockImplementation or similar methods.
      *
-     * @see MockState.initState
+     * @example
+     * ```ts
+     * const mockFn = xJet.fn();
+     * mockFn('first call');
+     * mockFn('second call');
      *
-     * @since v1.0.0
+     * expect(mockFn.mock.calls.length).toBe(2);
+     *
+     * mockFn.mockClear();
+     *
+     * // All calls information has been cleared
+     * expect(mockFn.mock.calls.length).toBe(0);
+     * ```
+     *
+     * @since 1.0.0
      */
 
     mockClear(): this {
@@ -273,19 +305,31 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     }
 
     /**
-     * Resets the mock function to its initial state.
+     * Resets the mock by clearing all state and removing all queued implementations.
      *
-     * @returns The current instance of the mock, allowing for method chaining.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * The `mockReset` method clears all invocation data and results by calling `mockClear()` and also resets
-     * the queued implementations,
-     * removing any previously queued behavior set by methods like `mockImplementationOnce`.
-     * This ensures that the mock is in a clean state and ready for new invocations or configurations.
+     * This method performs a more complete reset than mockClear() {@link mockClear}.
+     * It clears all stored information about calls and additionally removes any queued implementations that were
+     * set using mockImplementationOnce(). The default implementation will be restored.
      *
-     * @see MockState.mockClear
+     * @example
+     * ```ts
+     * const mockFn = xJet.fn(() => 'default');
+     * mockFn.mockImplementationOnce(() => 'first call');
+     * mockFn.mockImplementationOnce(() => 'second call');
      *
-     * @since v1.0.0
+     * console.log(mockFn()); // 'first call'
+     *
+     * mockFn.mockReset();
+     *
+     * // All calls have been cleared, and queued implementations removed
+     * console.log(mockFn()); // 'default'
+     * ```
+     *
+     * @see mockClear
+     * @since 1.0.0
      */
 
     mockReset(): this {
@@ -296,24 +340,37 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     }
 
     /**
-     * Restores the mock function to its original implementation and resets its state.
+     * Restores the original implementation of the mocked function.
      *
-     * @returns The current instance of the mock, allowing for method chaining.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * The `mockRestore` method does two things:
-     * 1. It restores the mock to its initial implementation, which was set during the mocks creation or
-     *    via the `mockImplementation` method.
-     * 2. It clears all tracking data, such as calls, results, contexts, instances, and invocation call order
-     *    by calling `mockReset()`, ensuring the mock is fully reset and ready for new invocations.
+     * This method performs the most complete reset operation. It first calls mockReset() {@link mockReset}
+     * to clear all state and queued implementations, then restores the original implementation
+     *  provided when the mock was created. If a custom restore function was provided,
+     * it will be used instead to determine the implementation to restore.
      *
-     * This method is useful for ensuring that the mock is completely restored and cleared, making it behave as it did
-     * when it was first created or last restored.
+     * @example
+     * ```ts
+     * // Create a mock with an original implementation
+     * const originalFn = (x: number) => x * 2;
+     * const mockFn = xJet.fn(originalFn);
      *
-     * @see MockState.restore
-     * @see MockState.mockReset
+     * // Override the implementation
+     * mockFn.mockImplementation((x: number) => x * 3);
      *
-     * @since v1.0.0
+     * console.log(mockFn(5)); // 15
+     *
+     * // Restore the original implementation
+     * mockFn.mockRestore();
+     *
+     * console.log(mockFn(5)); // 10
+     * ```
+     *
+     * @see mockClear
+     * @see mockReset
+     *
+     * @since 1.0.0
      */
 
     mockRestore(): this {
@@ -322,361 +379,414 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
         if(typeof restore === 'function') this.implementation = restore;
         else this.implementation = this.originalImplementation;
 
-        const index = MockState.mocks.indexOf(<MockState> <unknown> this);
-        if (index !== -1) {
-            MockState.mocks.splice(index, 1);
-        }
-
         return this;
     }
 
     /**
-     * Retrieves the mock implementation for a function, if available.
+     * Returns the current implementation of the mock function.
      *
-     * @template ReturnType The type the return value of the function.
-     * @template Context The type of the `this` context for the function.
-     * @template Args The type the argument(s) of the function.
-     *
-     * @return A function matching `FunctionLikeType` that represents the mock implementation,
-     * or `undefined` if no implementation is set.
+     * @returns The current mock implementation, or undefined if no implementation exists.
      *
      * @remarks
-     * This method returns the mock implementation associated with the instance.
-     * If no mock implementation exists, it returns `undefined`.
+     * This method returns the current implementation function used by the mock.
+     * This could be the default implementation, a custom implementation set via
+     * mockImplementation() {@link mockImplementation}, or the original implementation
+     * if mockRestore() {@link mockRestore} was called.
+     *
+     * @example
+     * ```ts
+     * const mockFn = xJet.fn(() => 'default');
+     *
+     * // Get the default implementation
+     * const impl = mockFn.getMockImplementation();
+     * console.log(impl()); // 'default'
+     *
+     * // Change the implementation
+     * mockFn.mockImplementation(() => 'new implementation');
+     *
+     * // Get the new implementation
+     * const newImpl = mockFn.getMockImplementation();
+     * console.log(newImpl()); // 'new implementation'
+     * ```
      *
      * @since 1.0.0
      */
 
-    getMockImplementation(): FunctionLikeType<ReturnType, Args, Context> | undefined {
+    getMockImplementation(): ImplementationType<F> | undefined {
         return this.implementation;
     }
 
     /**
-     * Retrieves the next implementation from the queued implementations or defaults to the current implementation.
+     * Returns the next implementation to be used when the mock is called.
      *
-     * @template ReturnType The return type of the function-like implementation.
-     * @template Context     The context in which the implementation executes.
-     * @template Args        The argument types expected by the implementation.
-     *
-     * @return The next implementation from the queue if available, or the current implementation.
-     * Returns are `undefined` if no implementation is found.
+     * @returns The next implementation from the queue, or the default implementation if the queue is empty.
      *
      * @remarks
-     * This method first checks if there are any queued implementations available.
-     * If a queued implementation exists, it will be removed from the queue and returned.
-     * If the queue is empty, the primary current implementation is returned.
-     * Returns are `undefined` if there is no implementation available.
+     * This method retrieves and removes the next implementation from the queue of implementations
+     * added via mockImplementationOnce() {@link mockImplementationOnce}. If the queue is empty,
+     * it returns the default implementation set via mockImplementation() {@link mockImplementation}
+     * or the original function.
+     *
+     * @example
+     * ```ts
+     * const mockFn = xJet.fn(() => 'default');
+     * mockFn.mockImplementationOnce(() => 'first call');
+     * mockFn.mockImplementationOnce(() => 'second call');
+     *
+     * const firstImpl = mockFn.getNextImplementation();
+     * console.log(firstImpl()); // 'first call'
+     *
+     * const secondImpl = mockFn.getNextImplementation();
+     * console.log(secondImpl()); // 'second call'
+     *
+     * const defaultImpl = mockFn.getNextImplementation();
+     * console.log(defaultImpl()); // 'default'
+     * ```
      *
      * @since 1.0.0
      */
 
-    getNextImplementation(): FunctionLikeType<ReturnType, Args, Context> | undefined {
+    getNextImplementation(): ImplementationType<F> | undefined {
         return this.queuedImplementations.length ? this.queuedImplementations.shift() : this.implementation;
     }
 
     /**
-     * Replaces the default implementation of a mock function with the provided function.
+     * Sets a new implementation for this mock function.
      *
-     * @template ReturnType - The type of the value returned by the implementation function.
-     * @template Context - The context (`this`) expected by the implementation function.
-     * @template Args - The types of the arguments expected by the implementation function.
-     *
-     * @param fn - The function to be used as the mock implementation. It defines
-     * the behavior of the mock when called.
-     *
-     * @return Returns the instance of the current object for method chaining.
+     * @param fn - The function to be used as the mock implementation.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * This method is useful when you need to mock the behavior of a function
-     * dynamically during tests or in controlled scenarios.
+     * This method sets a persistent implementation that will be used whenever the mock function is called,
+     * unless there are queued implementations from mockImplementationOnce() {@link mockImplementationOnce}.
+     * The implementation remains until it is replaced by another call to mockImplementation() or restored
+     * via mockRestore() {@link mockRestore}.
+     *
+     * @example
+     * ```ts
+     * const mockFn = xJet.fn();
+     *
+     * mockFn.mockImplementation((x: number) => x * 2);
+     *
+     * console.log(mockFn(5)); // 10
+     * console.log(mockFn(10)); // 20
+     *
+     * // Change the implementation
+     * mockFn.mockImplementation((x: number) => x * 3);
+     *
+     * console.log(mockFn(5)); // 15
+     * ```
+     *
+     * @see mockRestore
+     * @see mockImplementationOnce
      *
      * @since 1.0.0
      */
 
-    mockImplementation(fn: FunctionLikeType<ReturnType, Args, Context>): this {
+    mockImplementation(fn: ImplementationType<F>): this {
         this.implementation = fn;
 
         return this;
     }
 
     /**
-     * Sets a mock implementation that will be used once for the next call to the mocked function.
+     * Adds a one-time implementation for this mock function.
      *
-     * @template ReturnType The type of the value that the mock function will return.
-     * @template Context The type of the `this` context for the mock function.
-     * @template Args The type of arguments that the mock function will receive.
-     *
-     * @param fn - The function to be used as the mock implementation for the next call.
-     * @returns The current instance, allowing for chaining of mock configurations.
+     * @param fn - The function to be used as the mock implementation for a single call.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * The provided mock implementation will only be executed once. Further calls will fall back
-     * to a different implementation, if provided, or the default behavior of the mock function.
+     * This method queues an implementation that will be used for a single call to the mock function.
+     * After being used once, it will be removed from the queue. Multiple implementations can be queued,
+     * and they will be used in the order they were added. Once all queued implementations are used,
+     * the mock will revert to using the implementation set by mockImplementation() {@link mockImplementation}.
      *
      * @example
      * ```ts
-     * const mockFn = new MockState();
+     * const mockFn = xJet.fn(() => 'default');
      *
-     * // Set default implementation
-     * mockFn.mockImplementation(() => 'default');
+     * mockFn.mockImplementationOnce(() => 'first call')
+     *       .mockImplementationOnce(() => 'second call');
      *
-     * // Set one-time behavior for the next call
-     * mockFn.mockImplementationOnce(() => 'first call');
-     *
-     * console.log(mockFn()); // Output: 'first call' (from mockImplementationOnce)
-     * console.log(mockFn()); // Output: 'default' (from mockImplementation)
+     * console.log(mockFn()); // 'first call'
+     * console.log(mockFn()); // 'second call'
+     * console.log(mockFn()); // 'default'
      * ```
      *
-     * @see FunctionLikeType
+     * @see mockReset
+     * @see mockImplementation
      *
      * @since 1.0.0
      */
 
-    mockImplementationOnce(fn: FunctionLikeType<ReturnType, Args, Context>): this {
+    mockImplementationOnce(fn: ImplementationType<F>): this {
         this.queuedImplementations.push(fn);
 
         return this;
     }
 
     /**
-     * Sets a mock implementation to always return a specified value when invoked.
+     * Sets a fixed return value for this mock function.
      *
-     * @template ReturnType The type of the value returned by the mock implementation.
-     *
-     * @param value - The value to always return when the mock function is called.
-     * @return The current instance for chaining.
+     * @param value - The value to be returned when the mock function is called.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * This method overrides any previous mock implementation configured for the function.
+     * This method is a convenience wrapper around mockImplementation() {@link mockImplementation}
+     * that creates an implementation which always returns the same value. It replaces any existing
+     * implementation with a function that simply returns the specified value.
      *
      * @example
      * ```ts
-     * const mockFn = new MockState();
+     * const mockFn = xJet.fn();
      *
-     * // Set mock to return 'Hello World' on each call
-     * mockFn.mockReturnValue('Hello World');
+     * mockFn.mockReturnValue(42);
      *
-     * console.log(mockFn()); // Output: 'Hello World'
-     * console.log(mockFn()); // Output: 'Hello World'
+     * console.log(mockFn()); // 42
+     * console.log(mockFn('anything')); // 42
+     * console.log(mockFn({}, [])); // 42
+     *
+     * // Can be changed
+     * mockFn.mockReturnValue('new value');
+     * console.log(mockFn()); // 'new value'
      * ```
+     *
+     * @see mockImplementation
+     * @see mockReturnValueOnce
      *
      * @since 1.0.0
      */
 
-    mockReturnValue(value: ReturnType): this {
+    mockReturnValue(value: ReturnType<F>): this {
         this.mockImplementation(() => value);
 
         return this;
     }
 
     /**
-     * Sets up a mock function to always resolve a promise with the specified value when called.
+     * Adds a one-time fixed return value for this mock function.
      *
-     * @template ResolvedValueType - The type of the value to be resolved by the promise.
-     * @template ReturnType - The return type of the function, which should include a Promise of the specified resolved value type.
-     *
-     * @param value - The value to be returned as the resolved value of the promise.
-     * @returns The mock function instance, enabling method chaining.
+     * @param value - The value to be returned for a single call to the mock function.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * This method is particularly useful for mocking asynchronous functions that return promises.
-     * It ensures that the mock function resolves with the provided value every time it is called.
+     * This method is a convenience wrapper around mockImplementationOnce() {@link mockImplementationOnce}
+     * that creates a one-time implementation which returns the specified value. Multiple return values
+     * can be queued, and they will be used in the order they were added. After all queued values are
+     * consumed, the mock will revert to its default implementation.
      *
      * @example
      * ```ts
-     * const mockFn = new MockState<Promise<string>>();
+     * const mockFn = xJet.fn(() => 'default');
      *
-     * // Set mock to return a resolved promise with the value 'Success'
-     * mockFn.mockResolvedValue('Success');
+     * mockFn.mockReturnValueOnce(42)
+     *       .mockReturnValueOnce('string value')
+     *       .mockReturnValueOnce({ object: true });
      *
-     * mockFn().then((result: string) => {
-     *     console.log(result); // Output: 'Success'
-     * });
+     * console.log(mockFn()); // 42
+     * console.log(mockFn()); // 'string value'
+     * console.log(mockFn()); // { object: true }
+     * console.log(mockFn()); // 'default'
      * ```
+     *
+     * @see mockReturnValue
+     * @see mockImplementationOnce
      *
      * @since 1.0.0
      */
 
-    mockResolvedValue(value: ResolvedValueType<ReturnType>): this {
-        this.mockImplementation(() => <ReturnType> Promise.resolve(value));
-
-        return this;
-    }
-
-    /**
-     * Sets a mock implementation for a single call that resolves to the specified value.
-     *
-     * @template ReturnType The type of the resolved value.
-     * @template ResolvedValueType The type of the input value to be resolved.
-     *
-     * @param value - The value that the promise should resolve with when the mock is called once.
-     * @return The current mock object instance, enabling method chaining.
-     *
-     * @remarks
-     * This method is useful for defining custom behavior for a specific invocation of a mocked function,
-     * returning a resolved promise with the provided value.
-     *
-     * @example
-     * ```ts
-     * const mockFn = new MockState(async () => {
-     *     return 'end';
-     * });
-     *
-     * // Set mock to return a resolved promise with the value 'Success'
-     * mockFn.mockResolvedValueOnce('Success');
-     *
-     * mockFn().then((result: string) => {
-     *     console.log(result); // Output: 'Success'
-     * });
-     *
-     * mockFn().then((result: string) => {
-     *     console.log(result); // Output: 'end'
-     * });
-     * ```
-     *
-     * @since 1.0.0
-     */
-
-    mockResolvedValueOnce(value: ResolvedValueType<ReturnType>): this {
-        this.mockImplementationOnce(() => <ReturnType> Promise.resolve(value));
-
-        return this;
-    }
-
-    /**
-     * Sets the return value of the mock function for a single call.
-     *
-     * @template ReturnType The type of the value to be returned.
-     *
-     * @param value - The value to be returned by the mock function for the next call.
-     * @return The mock function instance, allowing for method chaining.
-     *
-     * @remarks
-     * This method only affects the return value for the next call to the mock function.
-     * All further calls will use the usual mock implementation or other specified behaviors.
-     *
-     * @example
-     * ```ts
-     * const mockFn = new MockState();
-     *
-     * // Set default return value
-     * mockFn.mockReturnValue('Default Value');
-     *
-     * // Set a one-time return value for the next call
-     * mockFn.mockReturnValueOnce('First Call');
-     * mockFn.mockReturnValueOnce('Second Call');
-     *
-     * console.log(mockFn()); // Output: 'First Call' (from mockReturnValueOnce)
-     * console.log(mockFn()); // Output: 'Second Call' (from mockReturnValueOnce)
-     * console.log(mockFn()); // Output: 'Default Value' (from mockReturnValue)
-     * ```
-     *
-     * @since 1.0.0
-     */
-
-    mockReturnValueOnce(value: ReturnType): this {
+    mockReturnValueOnce(value: ReturnType<F>): this {
         this.mockImplementationOnce(() => value);
 
         return this;
     }
 
     /**
-     * Mocks the method to always return a rejected Promise with the specified value.
+     * Sets a resolved Promise return value for this mock function.
      *
-     * @template ReturnType - The expected type of the return value for the mocked method.
-     * @template RejectedValueType - The type of the value used to reject the Promise.
-     *
-     * @param value - The value with which the mocked Promise will be rejected.
-     *
-     * @return The current instance of the mock for chaining purposes.
+     * @param value - The value that the Promise will resolve to.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * This method is useful for testing scenarios where the function being mocked
-     * is expected to reject with a specific value.
+     * This method is a convenience wrapper that creates an implementation which returns a
+     * Promise that resolves to the specified value. It's particularly useful for testing
+     * async functions that should return resolved Promises.
      *
      * @example
      * ```ts
-     * const mockFn = new MockState<Promise<string>>();
+     * const mockFn = xJet.fn();
      *
-     * // Set mock to return a rejected promise with the value 'Error'
-     * mockFn.mockRejectedValue('Error');
+     * mockFn.mockResolvedValue('resolved value');
      *
-     * mockFn().catch(error => {
-     *     console.log(error); // Output: 'Error'
+     * // The mock now returns a Promise that resolves to 'resolved value'
+     * mockFn().then(result => {
+     *   console.log(result); // 'resolved value'
      * });
+     *
+     * // Can also be used with async/await
+     * const result = await mockFn();
+     * console.log(result); // 'resolved value'
      * ```
+     *
+     * @see mockRejectedValue
+     * @see mockImplementation
+     * @see mockResolvedValueOnce
      *
      * @since 1.0.0
      */
 
-    mockRejectedValue(value: RejectedValueType<ReturnType>): this {
-        this.mockImplementation(() => <ReturnType> Promise.reject(value));
+    mockResolvedValue(value: ResolvedValueType<ReturnType<F>>): this {
+        this.mockImplementation(() => <ReturnType<F>> Promise.resolve(value));
 
         return this;
     }
 
     /**
-     * Adds a one-time rejection with the provided value to the mock function.
+     * Adds a one-time resolved Promise return value for this mock function.
      *
-     * @template ReturnType - The type of the value the mock function would return.
-     *
-     * @param value - The value to reject the promise with in the mock function.
-     * @return The current instance of the mock function, allowing for method chaining.
+     * @param value - The value that the Promise will resolve to for a single call.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * This method configures a mock function to return a rejected promise with the
-     * specified value the next time it is called. After the rejection occurs, the
-     * mock function's behavior will revert to the next defined mock behavior, or
-     * to the default behavior if no behaviors are defined.
+     * This method is a convenience wrapper that creates a one-time implementation which returns
+     * a Promise that resolves to the specified value. Multiple resolved values can be queued and
+     * will be used in the order they were added. After all queued values are consumed, the mock
+     * will revert to its default implementation.
      *
      * @example
      * ```ts
-     * const mockFn = new MockState<Promise<string>>();
+     * const mockFn = xJet.fn(() => Promise.resolve('default'));
      *
-     * // Set default rejected value
-     * mockFn.mockRejectedValue('Default Error');
+     * mockFn.mockResolvedValueOnce('first call')
+     *       .mockResolvedValueOnce('second call')
+     *       .mockResolvedValueOnce('third call');
      *
-     * // Set a one-time rejected value for the next call
-     * mockFn.mockRejectedValueOnce('First Call Error');
-     *
-     * mockFn().catch(error => {
-     *     console.log(error); // Output: 'First Call Error' (from mockRejectedValueOnce)
-     * });
-     *
-     * mockFn().catch(error => {
-     *     console.log(error); // Output: 'Default Error' (from mockRejectedValue)
-     * });
+     * // Each call returns a different Promise
+     * await expect(mockFn()).resolves.toEqual('first call');
+     * await expect(mockFn()).resolves.toEqual('second call');
+     * await expect(mockFn()).resolves.toEqual('third call');
+     * await expect(mockFn()).resolves.toEqual('default');
      * ```
+     *
+     * @see mockResolvedValue
+     * @see mockRejectedValueOnce
+     * @see mockImplementationOnce
      *
      * @since 1.0.0
      */
 
-    mockRejectedValueOnce(value: RejectedValueType<ReturnType>): this {
-        this.mockImplementationOnce(() => <ReturnType> Promise.reject(value));
+    mockResolvedValueOnce(value: ResolvedValueType<ReturnType<F>>): this {
+        this.mockImplementationOnce(() => <ReturnType<F>> Promise.resolve(value));
 
         return this;
     }
 
-    // todo: withImplementation
-
     /**
-     * Custom inspection method for the `util.inspect` function.
+     * Sets a rejected Promise return value for this mock function.
      *
-     * @returns A string representing the mock constructor with the specified `name` property.
+     * @param value - The error that the Promise will reject with.
+     * @returns The mock instance for method chaining.
      *
      * @remarks
-     * This method is triggered when `util.inspect` is invoked on an instance of this class.
-     * It provides a customized string representation of the class instance, enhancing debugging
-     * and inspection output for developers.
+     * This method is a convenience wrapper that creates an implementation which returns a
+     * Promise that rejects with the specified value. It's particularly useful for testing
+     * error handling in async functions.
      *
      * @example
      * ```ts
-     * const mockFn = new MockState();
-     * mockFn.name = 'MyMockFunction';
+     * const mockFn = xJet.fn();
      *
-     * // Inspect the mock function
-     * console.log(mockFn); // Output: <Mock Constructor MyMockFunction>
+     * mockFn.mockRejectedValue(new Error('Something went wrong'));
+     *
+     * // The mock now returns a Promise that rejects with the error
+     * mockFn().catch(error => {
+     *   console.error(error.message); // 'Something went wrong'
+     * });
+     *
+     * // Can also be used with async/await and try/catch
+     * try {
+     *   await mockFn();
+     * } catch (error) {
+     *   console.error(error.message); // 'Something went wrong'
+     * }
      * ```
+     *
+     * @see mockResolvedValue
+     * @see mockImplementation
+     * @see mockRejectedValueOnce
+     *
+     * @since 1.0.0
+     */
+
+    mockRejectedValue(value: RejectedValueType<ReturnType<F>>): this {
+        this.mockImplementation(() => <ReturnType<F>> Promise.reject(value));
+
+        return this;
+    }
+
+    /**
+     * Adds a one-time rejected Promise return value for this mock function.
+     *
+     * @param value - The error that the Promise will reject with for a single call.
+     * @returns The mock instance for method chaining.
+     *
+     * @remarks
+     * This method is a convenience wrapper that creates a one-time implementation which returns
+     * a Promise that rejects with the specified value. Multiple rejected values can be queued and
+     * will be used in the order they were added. After all queued values are consumed, the mock
+     * will revert to its default implementation.
+     *
+     * @example
+     * ```ts
+     * const mockFn = xJet.fn(() => Promise.resolve('success'));
+     *
+     * mockFn.mockRejectedValueOnce(new Error('first error'))
+     *       .mockRejectedValueOnce(new Error('second error'));
+     *
+     * // First call rejects with 'first error'
+     * await expect(mockFn()).rejects.toThrow('first error');
+     *
+     * // Second call rejects with 'second error'
+     * await expect(mockFn()).rejects.toThrow('second error');
+     *
+     * // Third call uses the default implementation and resolves
+     * await expect(mockFn()).resolves.toEqual('success');
+     * ```
+     *
+     * @see mockRejectedValue
+     * @see mockResolvedValueOnce
+     * @see mockImplementationOnce
+     *
+     * @since 1.0.0
+     */
+
+    mockRejectedValueOnce(value: RejectedValueType<ReturnType<F>>): this {
+        this.mockImplementationOnce(() => <ReturnType<F>> Promise.reject(value));
+
+        return this;
+    }
+
+    /**
+     * Custom inspection method for Node.js util.inspect().
+     *
+     * @returns A string representation of this mock constructor.
+     *
+     * @remarks
+     * This method implements the Node.js custom inspection protocol by using the
+     * Symbol.for('nodejs.util.inspect.custom') symbol. When the mock is inspected
+     * using util.inspect() or displayed in a Node.js REPL, this custom string
+     * representation will be used instead of the default object inspection.
+     *
+     * @example
+     * ```ts
+     * const mockConstructor = xJet.fn();
+     * console.log(mockConstructor); // Outputs: <Mock Constructor undefined>
+     *
+     * const namedMock = xJet.fn().mockName('myMock');
+     * console.log(namedMock); // Outputs: <Mock Constructor myMock>
+     * ```
+     *
+     * @see https://nodejs.org/api/util.html#util_custom_inspection_functions_on_objects
      *
      * @since 1.0.0
      */
@@ -686,20 +796,27 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     }
 
     /**
-     * Initializes and returns the state object for mock function tracking.
+     * Initializes the internal state object for the mock function.
      *
-     * @return An object containing the initialized mock function state.
+     * @returns A new mock state object with default empty values.
      *
      * @remarks
-     * The state object contains the structure necessary to keep track of
-     * calls, results, contexts, instances, and invocation orders of the function.
+     * This private method creates and returns a fresh state object used to track
+     * mock function invocations. The state includes:
+     * - calls: Arguments passed to the mock function
+     * - results: Return values or errors from each call
+     * - lastCall: Arguments from the most recent call
+     * - contexts: 'this' context values for each call
+     * - instances: Objects created when the mock is used as a constructor
+     * - invocationCallOrder: Tracking the sequence of calls across multiple mocks
      *
-     * @see MocksStateInterface
+     * This method is used internally when creating a new mock or when resetting
+     * an existing mocks state.
      *
-     * @since v1.0.0
+     * @since 1.0.0
      */
 
-    private initState(): MocksStateInterface<ReturnType, Args, Context> {
+    private initState(): MocksStateInterface<F> {
         return {
             calls: [],
             results: [],
@@ -711,45 +828,42 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
     }
 
     /**
-     * Invokes the next implementation of a mock function with the provided context and arguments.
+     * Invokes the mock function with the provided arguments and context.
      *
-     * @template Context The type of `this` context in which the function is invoked.
-     * @template Args The type of the arguments passed to the function.
-     * @template ReturnType The type of the return value, of the function being invoked.
-     *
-     * @param thisArg - The context (`this`) in which the function is executed.
-     * @param args - The arguments to be passed to the function.
-     *
-     * @returns The result of the function invocation, which is either the return value, the thrown error, or undefined.
+     * @param thisArg - The 'this' context for the function call
+     * @param args - The arguments to pass to the function
+     * @returns The result of the mock implementation or undefined
      *
      * @remarks
-     * This method simulates the function call for a mocked implementation. It tracks all invocations,
-     * including the call order, the provided arguments, and the context. It handles binding, default
-     * arguments, and maintains a record of results (either successful returns or thrown errors).
+     * This private method handles the actual invocation of the mock function and manages all
+     * state trackings.
+     *
+     * This method is central to the mock's functionality, enabling call tracking,
+     * result recording, and the execution of custom implementations.
      *
      * @since 1.0.0
      */
 
-    private invoke(thisArg: Context, args: Args): ReturnType | undefined {
+    private invoke(thisArg: ThisParameterType<F>, args: Parameters<F>): ReturnType<F> | undefined {
         let thisContext = thisArg;
-        const impl = <FunctionLikeType<ReturnType, Args, Context> & BoundInterface> this.getNextImplementation();
+        const impl = <FunctionType & BoundInterface> this.getNextImplementation();
 
-        const argsArray = <Array<unknown>> args;
+        const argsArray = <Parameters<F>> args;
         if (typeof impl === 'function') {
             if (impl.__boundArgs) argsArray.unshift(...impl.__boundArgs);
-            if (impl.__boundThis) thisContext = <Context> impl.__boundThis;
+            if (impl.__boundThis) thisContext = <ThisParameterType<F>> impl.__boundThis;
         }
 
-        this.state.calls.push(<Args> argsArray);
-        this.state.contexts.push(<Context> thisContext);
+        this.state.calls.push(argsArray);
+        this.state.contexts.push(<ThisParameterType<F>> thisContext);
         this.state.invocationCallOrder.push(this.state.invocationCallOrder.length + 1);
 
-        let result: MockInvocationResultInterface<ReturnType>;
+        let result: MockInvocationResultInterface<ReturnType<F>>;
         const index = this.state.results.push({ value: undefined, type: 'incomplete' }) - 1;
 
         if (impl) {
             try {
-                const value = impl.call(<Context> undefined, ...args);
+                const value = impl.call(<ThisParameterType<F>> undefined, ...args);
                 result = { type: 'return', value };
             } catch (error) {
                 result = { value: error, type: 'throw' };
@@ -761,57 +875,83 @@ export class MockState<ReturnType = unknown, Args extends Array<unknown> = unkno
         this.state.lastCall = args;
         this.state.results[index] = result;
 
-        return <ReturnType> result.value;
+        return <ReturnType<F>> result.value;
     }
 
     /**
-     * Invokes a function within a specific context and with provided arguments.
+     * Handles property access for the mock function proxy.
      *
-     * @template Context The type of the context in which the function is invoked.
-     * @template Args The type of the arguments passed to the function.
-     * @template ReturnType The type of the value that the invoked function returns.
-     *
-     * @param target - The instance of the class containing the method to be invoked.
-     * @param thisArg - The context object that will be bound to the invoked function.
-     * @param argumentsList - The list of arguments to pass to the invoked function.
-     * @returns The result of the invoked function or `undefined` if no value is returned.
+     * @param target - The mock function instance
+     * @param property - The property name or symbol being accessed
+     * @returns The property value from either the mock or the original implementation
      *
      * @remarks
-     * This method modifies the state of the `target` instance by adding the `thisArg`
-     * to the `target.state.instances` array before invoking the function.
+     * This private method is used as the 'get' trap for the Proxy surrounding the mock function.
+     * It provides property access fallback behavior - first checking if the property exists
+     * on the mock itself, and if not, retrieving it from the original implementation.
+     *
+     * This enables the mock to maintain its own properties while still allowing access to
+     * properties from the original function, providing a more transparent mocking experience.
      *
      * @since 1.0.0
      */
 
-    private invokeFunction(target: this, thisArg: Context, argumentsList: Args): ReturnType | undefined {
+    private invokeGet(target: this, property: string | symbol): unknown {
+        const isProperty = Reflect.has(target, property);
+        if(isProperty) return Reflect.get(target, property);
+
+        return Reflect.get(target.originalImplementation, property);
+    }
+
+    /**
+     * Handles constructor invocation when the mock is used with 'new'.
+     *
+     * @param target - The mock function instance
+     * @param argArray - The arguments passed to the constructor
+     * @param newTarget - The constructor that was directly invoked
+     * @returns The constructed instance
+     *
+     * @remarks
+     * This method is used as the 'construct' trap for the Proxy surrounding the mock function.
+     * It delegates to the `invoke` method to handle the actual function call, then tracks the
+     * resulting instance in the mock's state for later verification.
+     *
+     * The method handles both cases where the constructor returns an object (which becomes the
+     * instance) and where it doesn't (in which case the newTarget becomes the instance).
+     *
+     * @since 1.0.0
+     */
+
+    private invokeClass(target: this, argArray: Parameters<F>, newTarget: object): object {
+        const result = target.invoke.call(target, <ThisParameterType<F>> newTarget, argArray);
+        const isClassInstance = typeof result === 'object' && result !== null && 'constructor' in result;
+        target.state.instances.push(isClassInstance ? <ThisParameterType<F>> result : <ThisParameterType<F>> newTarget);
+
+        return typeof result === 'object' ? <object> result : newTarget;
+    }
+
+    /**
+     * Handles function invocation when the mock is called.
+     *
+     * @param target - The mock function instance
+     * @param thisArg - The 'this' context for the function call
+     * @param argumentsList - The arguments passed to the function
+     * @returns The result of the function invocation
+     *
+     * @remarks
+     * This method is used as the 'apply' trap for the Proxy surrounding the mock function.
+     * It captures the calling context in the mock's state for later verification, then
+     * delegates to the `invoke` method to handle the actual function call logic.
+     *
+     * This method is called whenever the mock function is invoked as a regular function
+     * (not as a constructor).
+     *
+     * @since 1.0.0
+     */
+
+    private invokeFunction(target: this, thisArg: ThisParameterType<F>, argumentsList: Parameters<F>): ReturnType<F> | undefined {
         target.state.instances.push(thisArg);
 
         return target.invoke.call(target, thisArg, argumentsList);
-    }
-
-    /**
-     * Invokes a class method on the provided target with specified arguments and a new target.
-     *
-     * @template Args - The type of arguments to be passed to the invoked method.
-     *
-     * @param target - The object on which the class method is invoked.
-     * @param argArray - The array of arguments to pass to the invoked method.
-     * @param newTarget - The new object used as the invocation context.
-     * @returns The result of the invocation, typically an object. If the result is not an object,
-     *          the `newTarget` is returned instead.
-     *
-     * @remarks
-     * This method ensures that the result is stored in the `instances` array of the target's state
-     * if it is detected as a proper class instance. Otherwise, the `newTarget` is registered.
-     *
-     * @since 1.0.0
-     */
-
-    private invokeClass(target: this, argArray: Args, newTarget: object): object {
-        const result = target.invoke.call(target, <Context> newTarget, argArray);
-        const isClassInstance = typeof result === 'object' && result !== null && result.constructor;
-        target.state.instances.push(isClassInstance ? <Context> result : <Context> newTarget);
-
-        return typeof result === 'object' ? <object> result : newTarget;
     }
 }
