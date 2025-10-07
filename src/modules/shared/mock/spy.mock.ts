@@ -3,20 +3,16 @@
  */
 
 import type { ConstructorLikeType, FunctionLikeType, FunctionType } from '@remotex-labs/xjet-expect';
-import type { ConstructorKeysType, KeysExtendingConstructorType } from '@shared/mock/interfaces/spy-mock.interface';
+import type { MockProxyInterface, MockProxyStateInterface } from '@shared/mock/interfaces/spy-mock.interface';
 
 /**
  * Imports
  */
 
 import { MockState } from '@shared/states/mock.state';
+import { mockDescriptorProperty } from '@shared/mock/fn.mock';
 import { ExecutionError } from '@shared/errors/execution.error';
-import { getParentObject, mockDescriptorProperty } from '@shared/mock/fn.mock';
-
-export const proxyRegistry = new WeakMap<object, {
-    proxy: unknown;
-    spies: Map<PropertyKey, MockState>;
-}>();
+import { deepSearchObject, getOwnProperty } from '@shared/components/object.component';
 
 /**
  * Checks if a property on an object is provided via a proxy mechanism rather than directly defined.
@@ -63,309 +59,281 @@ export function isProxyProperty<T extends object>(obj: T, key: keyof T): boolean
 }
 
 /**
- * Creates a spy on a property accessed via a proxy getter, allowing interception
- * and monitoring of property access operations.
+ * Determines if a value is a mock proxy created by the mocking system.
  *
- * @template T - The type of the target object containing the proxy
- * @template K - The type of property key being spied on
+ * @param value - The value to check
+ * @returns `true` if the value is a mock proxy, `false` otherwise
  *
- * @param target - The object containing the property to spy on
- * @param key - The property key to intercept access to
- * @param method - The method to execute when the property is accessed
- * @returns A {@link MockState} instance that tracks interactions with the property
+ * @remarks
+ * This function checks if an object has the internal `__isMockProxy__` symbol property
+ * which is added to all mock proxy objects created by the mocking framework.
  *
- * @throws Error - If the target is not part of any global object
+ * Mock proxies are specialized proxy objects that intercept property access
+ * and method calls while providing mocking capabilities.
  *
  * @example
  * ```ts
- * // Create an object with dynamic property access
- * const user = new Proxy({}, {
- *   get(target, prop) {
- *     if (prop === 'name') return 'John';
- *     return target[prop];
- *   }
- * });
+ * const regularObject = { name: 'Test' };
+ * const mockObject = createMock({ name: 'Test' });
  *
- * // Spy on the 'name' property
- * const nameSpy = spyOnProxyGet(user, 'name', () => 'Jane');
- *
- * // Now accessing user.name returns 'Jane' and the access is tracked
- * console.log(user.name); // 'Jane'
- * expect(nameSpy).toHaveBeenCalled();
- *
- * // Restore original behavior
- * nameSpy.mockRestore();
- * console.log(user.name); // 'John'
+ * isMockProxy(regularObject); // false
+ * isMockProxy(mockObject);    // true
  * ```
  *
- * @see MockState
- * @see getParentObject
- *
- * @since 1.2.0
+ * @since 1.2.2
  */
 
-export function spyOnProxyGet<T extends object, K extends keyof T>(target: T, key: K, method: unknown): MockState {
-    const parent = getParentObject(target);
-    if (!parent) {
+export function isMockProxy(value: Record<symbol, unknown>): boolean {
+    return (value && typeof value === 'object' && '__isMockProxy__' in value);
+}
+
+/**
+ * Creates a mock proxy that intercepts property access on an object.
+ *
+ * @template T - The type of the target object being proxied
+ * @param target - The object to be proxied
+ * @returns A MockProxyInterface that intercepts property access on the target
+ *
+ * @remarks
+ * This function creates a proxy around an object that allows for interception
+ * and customization of property access. The proxy maintains an internal state
+ * that tracks mocked properties and provides mechanisms for customizing getter behavior.
+ *
+ * The proxy implements special properties:
+ * - `__isMockProxy__`: Used to identify mock proxy objects
+ * - `__MockMap__`: Provides access to the internal state for managing mocks
+ *
+ * Property access behavior:
+ * 1. First checks if a custom getter is defined and uses it if available
+ * 2. Then checks if the property has a specific mock implementation
+ * 3. Falls back to the original property on the target object
+ *
+ * @example
+ * ```ts
+ * const user = { name: 'John', getAge: () => 30 };
+ * const mockUser = createMockProxy(user);
+ *
+ * // Access original property
+ * console.log(mockUser.name); // "John"
+ *
+ * // Add a mock for a property
+ * const mockMap = mockUser.__MockMap__;
+ * mockMap.mocks.set('getAge', () => 25);
+ *
+ * // Now returns the mock implementation
+ * console.log(mockUser.getAge()); // 25
+ * ```
+ *
+ * @since 1.2.2
+ */
+
+export function createMockProxy<T extends object>(target: T): MockProxyInterface {
+    const state: MockProxyStateInterface = {
+        mocks: new Map(),
+        customGetter: null
+    };
+
+    const handler: ProxyHandler<T> = {
+        get(_target, prop, receiver) {
+            if (prop === '__isMockProxy__') return true;
+            if (prop === '__MockMap__') return state;
+
+            if (state.customGetter) {
+                return state.customGetter(target, prop, receiver);
+            }
+
+            if (state.mocks.has(prop)) {
+                return state.mocks.get(prop);
+            }
+
+            return Reflect.get(target, prop, receiver);
+        }
+    };
+
+    return new Proxy({}, handler);
+}
+
+/**
+ * Creates a spy on a property access for a proxied object.
+ *
+ * @template T - The type of the target object
+ * @template K - The key of the property to spy on
+ *
+ * @param target - The proxy object containing the property to spy on
+ * @param prop - The name of the property to spy on
+ * @returns A MockState object wrapping the property access
+ *
+ * @remarks
+ * This specialized spy function is designed to work with properties accessed through proxy objects.
+ * It handles the complexities of intercepting property access in proxied objects by:
+ *
+ * 1. Locating the proxy object in the global scope if needed
+ * 2. Converting a normal object to a mock proxy if it isn't already one
+ * 3. Setting up a spy on the property get operation
+ *
+ * The function ensures proper cleanup by providing a cleanup function that removes
+ * the spy from the proxy's internal mock map when the spy is restored.
+ *
+ * @throws Error - When the target object cannot be found in the global scope
+ *
+ * @example
+ * ```ts
+ * // With an existing proxy
+ * const proxyObj = createMockProxy({ getData: () => 'data' });
+ * const spy = spyOnProxyGet(proxyObj, 'getData');
+ *
+ * proxyObj.getData(); // Spy records this call
+ * spy.verify.called(); // Passes
+ *
+ * // With a normal object (will be converted to proxy)
+ * const obj = { getValue: () => 42 };
+ * const valueSpy = spyOnProxyGet(obj, 'getValue');
+ *
+ * obj.getValue(); // Spy records this call
+ * valueSpy.verify.called(); // Passes
+ * ```
+ *
+ * @since 1.2.2
+ */
+
+export function spyOnProxyGet<T extends Record<string | symbol, unknown>, K extends keyof T>(target: T, prop: K): MockState {
+    const found = deepSearchObject(globalThis, target);
+    if (!found) {
         throw new Error('xJet.spyOn item is not part of any global object');
     }
 
-    let entry = proxyRegistry.get(target);
-    if (!entry) {
-        entry = {
-            proxy: null,
-            spies: new Map<PropertyKey, MockState>()
-        };
+    if (!isMockProxy(target)) {
+        const { parent, key } = getOwnProperty(found.parent, found.key);
+        const method = Reflect.get(parent, key);
 
-        entry.proxy = new Proxy(target, {
-            get(orig, prop, receiver): unknown {
-                if (entry!.spies.has(prop)) {
-                    return entry!.spies.get(prop)!();
-                }
-
-                return Reflect.get(orig, prop, receiver);
-            }
-        });
-
-        proxyRegistry.set(target, entry);
-        Reflect.set(parent.object, parent.name, entry.proxy);
+        Reflect.set(parent, key, createMockProxy(method as object));
+        target = Reflect.get(parent, key) as T;
     }
 
-    const fn = method as FunctionLikeType;
-    const mockState = new MockState(fn, () => {
-        entry!.spies.delete(key);
-        Reflect.set(parent.object, parent.name, target);
+    const proxy = target as MockProxyInterface;
+    const mockState = new MockState(<FunctionType> target[prop], () => {
+        proxy.__MockMap__?.mocks.delete(prop);
     }, 'xJet.spyOn(Proxy#get)');
 
-    MockState.mocks.push(mockState);
-    entry.spies.set(key, mockState);
+    proxy.__MockMap__?.mocks.set(prop, mockState);
 
     return mockState;
 }
 
 /**
- * Creates a spy on a specified static method or static property of a target class (not a class instance).
- * Useful for mocking behavior during testing.
+ * Creates a spy on a method or property of an object.
  *
- * @template Target - The type of the target class.
- * @template Key - The static method or static property key on the target object to spy on.
+ * @template T - The type of the target object
+ * @template K - The key of the property or method to spy on
  *
- * @param target - The object on which to spy.
- * @param key - The key of the method or property of the target to spy on.
- * @returns If the spied-on property is a function, returns a `MockState` object for the function,
- * allowing tracking of calls and modifying the return value or behavior.
- * Otherwise, returns a `MockState` object for the property, enabling tracking and manipulation of its value.
- *
- * @throws Error Throws an error if the `target` is a primitive value.
- * @throws Error Throws an error if `key` is null or undefined.
- * @throws Error Throws an error if the specified property does not exist on the target object.
+ * @param target - The object containing the method or property to spy on
+ * @param key - The name of the method or property to spy on
+ * @returns A MockState object wrapping the original method or property
  *
  * @remarks
- * This function is commonly used in testing environments to replace or monitor functionality without
- * altering the actual logic in the source code. It provides fine-grained control over target behavior.
+ * This function creates a spy that wraps around an existing method or property on an object.
+ * The spy tracks all calls to the method or access to the property while still executing the original functionality.
+ *
+ * - For methods: The spy preserves the original `this` context and passes all arguments to the original method
+ * - For properties: The spy intercepts property access and returns the original value
  *
  * @example
  * ```ts
- * class ClassTest {
- *     static name: string = 'ClassTest';
- *
- *     static x(param: string) {
- *         console.log(`original static x ${ param }`);
- *     }
- * }
- *
- * const spy1 = xJet.spyOn(ClassTest, 'name');
- * const spy2 = xJet.spyOn(ClassTest, 'x');
- *
- * spy1.mockReturnValueOnce('Mock name');
- * spy2.mockImplementationOnce((param: string) => {
- *     console.log(`Mock x ${ param }`);
- * });
- *
- * console.log(ClassTest.name); // Mock name
- * console.log(ClassTest.name); // ClassTest
- *
- * ClassTest.x('test1'); // Mock x test1
- * ClassTest.x('test2'); // original static x test2
- * ```
- *
- * @see FunctionType
- * @see KeysExtendingConstructorType
- *
- * @since 1.0.0
- */
-
-export function spyOnImplementation<Target, Key extends KeysExtendingConstructorType<Target>>(target: Target, key: Key): Target[Key] extends FunctionType
-    ? MockState<ReturnType<Target[Key]>, Parameters<Target[Key]>, Target>
-    : MockState<Target[Key], [], Target>;
-
-/**
- * Creates a mock spy on the specified method or constructor of the target object.
- *
- * @template Target The type of the target object.
- * @template Key The type of the method or constructor key on the target object.
- *
- * @param target - The object whose method or constructor needs to be spied on.
- * @param key - The property key of the method or constructor to spy on.
- * @return A mock state representing the spied method or constructor if the key corresponds to a constructor type;
- * otherwise, throws a type error.
- *
- * @throws Error Throws an error if the `target` is a primitive value.
- * @throws Error Throws an error if `key` is null or undefined.
- * @throws Error Throws an error if the specified property does not exist on the target object.
- *
- * @remarks
- * This method is typically used for testing purposes to observe or manipulate calls to the method or constructor of an object.
- * The returned mock state may allow additional configuration, such as altering its behavior or tracking calls.
- *
- * @example
- * ```ts
- * const coolObject = {
- *     ClassTest: class {
- *         constructor(param: number) {
- *             console.log('original Constructor');
- *         }
- *
- *         justAnFunction() {
- *             console.log('original justAnFunction');
- *         }
- *     }
+ * // Spying on a method
+ * const user = {
+ *   getName: (prefix: string) => prefix + ' John'
  * };
+ * const spy = xJet.spyOn(user, 'getName');
  *
- * const spy = xJet.spyOn(coolObject, 'ClassTest');
- * spy.mockImplementationOnce((param: number) => {
- *     console.log(`mock Constructor with param: ${ param }`);
- *
- *     return <any> {
- *         justAnFunction() {
- *             console.log('mock justAnFunction');
- *         }
- *     };
- * });
- *
- * const instance = new coolObject.ClassTest(1); // mock Constructor with param: 1
- * instance.justAnFunction(); // mock justAnFunction
- *
- * const instance2 = new coolObject.ClassTest(2); // original Constructor
- * instance2.justAnFunction(); // original justAnFunction
+ * user.getName('Mr.'); // Returns "Mr. John"
  * ```
- *
- * @see ConstructorType
- * @see ConstructorKeysType
  *
  * @since 1.0.0
  */
 
-export function spyOnImplementation<Target, Key extends ConstructorKeysType<Target>>(target: Target, key: Key): Target[Key] extends ConstructorLikeType
-    ? MockState<InstanceType<Target[Key]>, ConstructorParameters<Target[Key]>, Target>
-    : never;
+export function spyOnImplementation<T extends object, K extends keyof T>(target: T, key: K):
+    T[K] extends FunctionType ?
+        MockState<(
+            this: ThisParameterType<T[K]>, ...args: Parameters<T[K]>
+        ) => ReturnType<T[K]>>
+        : MockState<() => T[K]>;
 
 /**
- * Creates a spy on a specific method or property of the given target object.
+ * Creates a spy on a method or property of an object.
  *
- * @template Target - The type of the target object to spy on.
- * @template Key - The key of the property or method to spy on within the target object.
+ * @template T - The type of the target object
+ * @template K - The key of the property or method to spy on
  *
- * @param target - The target object containing the property or method to be spied upon.
- * @param key - The name of the property or method on the target object to spy on.
- * @returns If the spied target is a function, it returns a `MockState` object to observe calls and arguments of the function.
- *          Otherwise, it returns a `MockState` object to observe the value or state of the property.
+ * @param target - The object containing the method or property to spy on
+ * @param prop - The name of the method or property to spy on
+ * @returns A MockState object wrapping the original method or property
  *
- * @throws Error Throws an error if the `target` is a primitive value.
- * @throws Error Throws an error if `key` is null or undefined.
- * @throws Error Throws an error if the specified property does not exist on the target object.
+ * @remarks
+ * This function creates a spy that wraps around an existing method or property on an object.
+ * The spy tracks all calls to the method or access to the property while still executing the original functionality.
  *
- * @remarks This method is commonly used in test environments to monitor and assert interactions with a specific property
- *          or method on an object. The returned `MockState` can be used to retrieve call history or observe mutations.
+ * - For methods: The spy preserves the original behavior while monitoring calls
+ * - For properties: The spy intercepts property access via descriptor methods
+ * - For class constructors: Special handling ensures proper constructor behavior
+ *
+ * The implementation handles various edge cases:
+ * - Properties accessed through proxies
+ * - Constructor functions with non-writable prototypes
+ * - Properties that may exist in the prototype chain
+ *
+ * @throws ExecutionError - When:
+ * - Target is not an object or function
+ * - Property key is null
+ * - Property doesn't exist on the target or its prototype chain
  *
  * @example
  * ```ts
- * const coolObject = {
- *     myMethod() {
- *         return 'Original myMethod';
- *     },
- *     coolString: 'Original coolString'
+ * // Spying on a method
+ * const user = {
+ *   getName: () => { return 'John'; }
  * };
+ * const spy = xJet.spyOn(user, 'getName');
  *
- * const spy = xJet.spyOn(coolObject, 'coolString');
- * const spy2 = xJet.spyOn(coolObject, 'myMethod');
- *
- * spy.mockImplementationOnce(() => 'mock coolString');
- * spy2.mockImplementationOnce(() => 'mock myMethod string');
- *
- * console.log(coolObject.coolString); // mock coolString
- * console.log(coolObject.coolString); // Original coolString
- * console.log(coolObject.myMethod()); // mock myMethod string
- * console.log(coolObject.myMethod()); // Original myMethod
+ * user.getName(); // Returns "John"
  * ```
  *
- * @see FunctionType
- *
  * @since 1.0.0
  */
 
-export function spyOnImplementation<Target, Key extends keyof Target>(target: Target, key: Key): Target[Key] extends FunctionType
-    ? MockState<ReturnType<Target[Key]>, Parameters<Target[Key]>, ThisParameterType<Target[Key]>>
-    : MockState<Target[Key] | void, [ Target[Key] ], ThisParameterType<Target[Key]>>
-
-/**
- * Creates a spy on the specified method or property of the given target object.
- *
- * Replaces the specified method or property with a mock implementation that can be tracked during testing.
- *
- * @template T - The type of the target object.
- * @template K - The keyof the target used to specify the method or property being spied upon.
- *
- * @param target - The object that contains the method or property to spy on. Must be a non-primitive object or function.
- * @param key - The name of the property or method to spy on.
- *
- * @return MockState A `MockState` instance representing the state of the spied-on property or method, allowing tracking and mocking.
- *
- * @throws Error If the target is null, undefined, or a primitive value such as a string or number.
- * @throws Error If the `key` parameter is null or undefined.
- * @throws Error If the specified property does not exist in the target object.
- *
- * @remarks
- * This function is part of a testing framework and is used to track interactions with an object's method or property.
- * It can modify non-function properties or replace function properties with a mock function for testing purposes.
- * The original method or property can be restored after the spy lifecycle is completed.
- *
- * This method will throw errors for invalid inputs, or if the target object does not have the specified property.
- *
- * @since 1.0.0
- */
-
-export function spyOnImplementation<T extends object, K extends keyof T>(target: T, key: K): MockState {
+export function spyOnImplementation<T extends Record<string | symbol, unknown>, K extends keyof T>(target: T, prop: K): MockState {
     if (target == null || (typeof target !== 'object' && typeof target !== 'function'))
         throw new ExecutionError('Target must be an object or function');
 
-    if (key === null)
+    if (prop === null)
         throw new ExecutionError('Spied property/method key is required');
 
-    if (isProxyProperty(target, key))
-        return spyOnProxyGet(target, key, Reflect.get(target, key));
+    if (isProxyProperty(target, prop))
+        return spyOnProxyGet(target, <string> prop);
 
-    if (!(key in target))
+    const { parent, key } = getOwnProperty(target, <string> prop);
+    if (!(key in parent))
         throw new ExecutionError(`Property/method '${ String(key) }' does not exist on target`);
 
-    const method = <MockState | T[K]> Reflect.get(target, key);
+    const method = <MockState | T[K]> Reflect.get(parent, key);
     if (!method) throw new Error(`Property '${ String(key) }' does not exist in the provided object`);
-    if ((<MockState> method).xJetMock)  return <MockState> method;
+    if ((<MockState> method).xJetMock) return <MockState> method;
 
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
-    if (typeof method !== 'function' || descriptor?.get) return mockDescriptorProperty(target, key);
+    if (typeof method !== 'function' || descriptor?.get)
+        return mockDescriptorProperty(target, key);
 
     let fn: FunctionLikeType = method as FunctionLikeType;
     const protoDesc = Object.getOwnPropertyDescriptor(fn, 'prototype');
     if (fn.prototype && protoDesc && !protoDesc.writable) {
-        fn = (...args: unknown[]): unknown => new (method as ConstructorLikeType<unknown, unknown[]>)(...args);
+        fn = (...args: unknown[]): unknown =>
+            new (method as ConstructorLikeType<unknown, unknown[]>)(...args);
     }
 
     const mockState = new MockState(fn, () => {
         Reflect.set(target, key, method);
     }, 'xJet.spyOn()');
 
-    MockState.mocks.push(mockState);
+    MockState.mocks.add(new WeakRef(mockState));
     Reflect.set(target, key, mockState);
 
     return mockState;

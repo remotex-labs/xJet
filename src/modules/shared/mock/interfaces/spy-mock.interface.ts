@@ -1,78 +1,60 @@
 /**
- * Import will remove at compile time
- */
-
-import type { ConstructorType } from '@remotex-labs/xjet-expect';
-
-/**
- * A utility type that removes all index signatures (string and number keys) from the given type `T`.
- * This results in a new type that retains only explicitly defined properties.
- *
- * @template T - The type from which index signatures are to be removed.
+ * Interface representing the internal state of a mock proxy.
  *
  * @remarks
- * This type is useful for filtering out index signatures from types, especially when working
- * with mapped or dynamic types where indexable properties are not desired.
- * When an object has an index signature (e.g., `[key: string]: any`), TypeScript assumes that all
- * possible string or number keys exist on the object. This utility type filters out such keys,
- * leaving only explicitly defined properties.
+ * This interface defines the structure for storing and managing the internal state
+ * of mock proxies, including mock implementations and custom property access behavior.
  *
- * @see https://stackoverflow.com/a/66252656/4536543
- *
- * @since 1.0.0
+ * @since 1.2.2
  */
 
-export type RemoveIndexType<T> = {
-    [P in keyof T as string extends P ? never : number extends P ? never : P]: T[P];
-};
+export interface MockProxyStateInterface {
+    /**
+     * Map storing mock implementations for specific properties.
+     * Keys are property names, values are the mock implementations.
+     *
+     * @since 1.2.2
+     */
+
+    mocks: Map<PropertyKey, unknown>;
+
+    /**
+     * Optional custom getter function that overrides default property access behavior.
+     * When provided, this function is called for all property access on the mock proxy.
+     *
+     * @since 1.2.2
+     */
+
+    customGetter: ((target: object, prop: PropertyKey, receiver: unknown) => unknown) | null;
+}
 
 /**
- * A utility type that maps the keys of a given type `T` whose properties are constructor types.
- *
- * This type iterates over the properties of `RemoveIndexType<T>`,
- * retaining only those keys where the value matches a constructor type.
- *
- * @template T - The target type from which constructor-like properties are to be extracted.
+ * Interface representing a mock proxy object.
  *
  * @remarks
- * This type is designed to filter out keys of a given type `T` to include only those that are associated with constructor functions.
- * It leverages mapped types along with conditional type checks to achieve this functionality.
+ * A `MockProxyInterface` defines the structure of objects that have been
+ * wrapped by a mocking proxy system. These proxies intercept property access
+ * and allow for dynamic replacement or monitoring of object properties.
  *
- * @since 1.0.0
+ * @since 1.2.2
  */
 
-export type PropertiesWithConstructorsType<T> = {
-    [Key in keyof RemoveIndexType<T> as RemoveIndexType<T>[Key] extends ConstructorType ? Key : never]: RemoveIndexType<T>[Key];
-};
+export interface MockProxyInterface extends Record<PropertyKey, unknown> {
+    /**
+     * A boolean flag that indicates this object is a mock proxy.
+     * Used for type checking and identification of mock objects.
+     *
+     * @since 1.2.2
+     */
 
-/**
- * A utility type that extracts the keys of the provided type `T` that correspond
- * to properties with constructor types, removing any index signatures.
- *
- * @template T - The object type from which constructor property keys are extracted.
- *
- * @remarks
- * This type is useful for narrowing down a type to only the keys representing
- * properties with constructor functions (e.g., classes) while excluding index signatures.
- *
- * @since 1.0.0
- */
+    readonly __isMockProxy__?: true;
 
-export type ConstructorKeysType<T> = RemoveIndexType<keyof PropertiesWithConstructorsType<T>>;
+    /**
+     * Provides access to the internal state of the mock proxy,
+     * including mapped mock implementations and custom getter functions.
+     *
+     * @since 1.2.2
+     */
 
-/**
- * A utility type that extracts the keys of a type `T` if `T` extends a constructor type.
- * If `T` does not extend a constructor type, it resolves to `never`.
- *
- * @template T - The type to check and extract keys from.
- *
- * @param T - The generic type parameter which is evaluated against a constructor type.
- *
- * @remarks
- * This type is particularly useful when working with class-like or constructor-based types.
- * It further applies `RemoveIndexType` to exclude index signatures from the resulting keys.
- *
- * @since 1.0.0
- */
-
-export type KeysExtendingConstructorType<T> = T extends ConstructorType ? keyof RemoveIndexType<T> : never;
+    readonly __MockMap__?: MockProxyStateInterface;
+}
