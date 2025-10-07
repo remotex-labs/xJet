@@ -42,9 +42,13 @@ import { beforeAllDirective, beforeEachDirective } from '@shared/directives/hook
  */
 
 function clearMocks(method: keyof MockState): void {
-    const mock = [ ...MockState.mocks ];
-    mock.map((mock) => {
-        mock[method]();
+    MockState.mocks.forEach((mock) => {
+        const instance = mock.deref();
+        if(!instance) {
+            return MockState.mocks.delete(mock);
+        }
+
+        instance[method]();
     });
 }
 
