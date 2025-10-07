@@ -2,8 +2,8 @@
  * Import will remove at compile time
  */
 
-import type { FnMockInterface } from '@shared/mock/interfaces/fn-mock.interface';
-import type { ConstructorLikeType, FunctionLikeType } from '@remotex-labs/xjet-expect';
+import type { MockableFunctionInterface } from '@shared/mock/interfaces/fn-mock.interface';
+import type { ConstructorLikeType, FunctionLikeType, FunctionType } from '@remotex-labs/xjet-expect';
 
 /**
  * Imports
@@ -11,59 +11,7 @@ import type { ConstructorLikeType, FunctionLikeType } from '@remotex-labs/xjet-e
 
 import { MockState } from '@shared/states/mock.state';
 import { ExecutionError } from '@shared/errors/execution.error';
-
-/**
- * Finds the parent object and name of a given function or value in the global scope.
- *
- * @param fn - The function or value to find in the global scope
- * @returns An object containing the name and parent object of the function, or `undefined` if not found
- *
- * @remarks
- * The `getParentObject` function attempts to locate where a function or value is defined
- * within the global context (`globalThis`). It searches for the function's name in the
- * global scope and also within properties of global objects. This is useful for
- * determining the original location of a function or value in the global namespace.
- *
- * Responsibilities:
- * - Finding functions directly attached to `globalThis`
- * - Locating functions within objects in the global scope
- * - Identifying functions by reference equality with global properties
- * - Supporting both named and anonymous functions
- *
- * @example
- * ```ts
- * // Finding a global function
- * const result = getParentObject(setTimeout);
- * // Returns: { name: 'setTimeout', parent: globalThis }
- *
- * // Finding a method on a global object
- * const arrayResult = getParentObject(Array.prototype.map);
- * // Returns: { name: 'map', parent: Array.prototype }
- * ```
- *
- * @since 1.2.0
- */
-
-export function getParentObject(fn: unknown): { name: string, object: Record<string, unknown> } | undefined {
-    if (fn == null) return undefined;
-    const name = typeof fn === 'function' ? fn.name : undefined;
-
-    if (name && name in globalThis) {
-        return { name, object: globalThis };
-    }
-
-    for (const [ key, val ] of Object.entries(globalThis) as Array<[string, unknown]>) {
-        if (val && name && (typeof val === 'object' || typeof val === 'function') && name in val) {
-            return { name, object: val as Record<string, unknown> };
-        }
-
-        if (Object.is(fn, val)) {
-            return { name: key, object: globalThis };
-        }
-    }
-
-    return undefined;
-}
+import { deepSearchObject, getOwnProperty } from '@shared/components/object.component';
 
 /**
  * Creates a mock for an object property using property descriptors.
@@ -106,7 +54,7 @@ export function mockDescriptorProperty<T extends object>(target: T, key: string 
         Object.defineProperty(target, key, originalDescriptor);
     }, 'xJet.spyOn()');
 
-    MockState.mocks.push(mockInstance);
+    MockState.mocks.add(new WeakRef(mockInstance));
     Object.defineProperty(target, key, {
         get() {
             return mockInstance.apply(this, []);
@@ -125,8 +73,8 @@ export function mockDescriptorProperty<T extends object>(target: T, key: string 
  * Creates a mock function interface with the specified implementation and optional restore function.
  *
  * @template ReturnType - The return type of the mocked function.
- * @template Context - The context type that the mocked function binds to.
  * @template Args - The argument type of the mocked function. Defaults to an array of unknown values.
+ * @template Context - The context type that the mocked function binds to.
  *
  * @param implementation - An optional implementation of the mocked function.
  * @param restore - An optional restore function used to reset the mock.
@@ -139,7 +87,7 @@ export function mockDescriptorProperty<T extends object>(target: T, key: string 
  * Responsibilities:
  * - Creating mock functions with custom implementations
  * - Supporting restore functionality for resetting mocks
- * - Providing type-safe mock interfaces via {@link FnMockInterface}
+ * - Providing type-safe mock interfaces via {@link MockableFunctionInterface}
  * - Integrating with the {@link MockState} system
  *
  * @example
@@ -154,7 +102,7 @@ export function mockDescriptorProperty<T extends object>(target: T, key: string 
  * ```
  *
  * @see MockState
- * @see FnMockInterface
+ * @see MockableFunctionInterface
  * @see FunctionLikeType
  *
  * @since 1.2.0
@@ -163,63 +111,89 @@ export function mockDescriptorProperty<T extends object>(target: T, key: string 
 export function fnImplementation<ReturnType, Args extends Array<unknown>, Context>(
     implementation?: FunctionLikeType<ReturnType, Args, Context>,
     restore?: () => FunctionLikeType<ReturnType, Args, Context> | void
-): FnMockInterface<ReturnType, Args, Context> {
-    return new MockState(implementation, restore, 'xJet.fn()') as FnMockInterface<ReturnType, Args, Context>;
+): MockableFunctionInterface<FunctionLikeType<ReturnType, Args, Context>> {
+    return <MockableFunctionInterface<FunctionLikeType<ReturnType, Args, Context>>>
+        new MockState(implementation, restore, 'xJet.fn()');
 }
 
 /**
- * Creates a mock function with an optional custom implementation.
+ * Creates a mock implementation of the provided class constructor.
  *
- * @template Method - The return type of the function being mocked
- * @template Args - The argument types for the function, defaulting to unknown array
- * @template Context - The context type (`this`) for the function, defaulting to unknown
- *
- * @param method - The original function to mock
- * @param implementation - Optional custom implementation to use instead of the original
- * @returns A {@link MockState} instance that wraps the original function
+ * @param method - The class constructor to mock
+ * @param implementation - Optional custom implementation of the mocked constructor
+ * @returns The mock state associated with the mocked constructor
  *
  * @remarks
- * The `mockImplementation` function creates a new {@link MockState} instance that wraps
- * around a provided function, allowing you to monitor calls to that function and optionally
- * override its implementation. This is particularly useful for testing components that
- * depend on external functions by providing controlled behavior during tests.
+ * This overload of the mockImplementation function is specifically designed for mocking class constructors.
+ * It allows for replacing a class implementation during testing while tracking instantiation.
  *
- * Responsibilities:
- * - Creating a trackable mock function from any original function
- * - Supporting custom implementation override capability
- * - Preserving the original function's signature and return type
- * - Enabling all mock functionality like call tracking and verification
- * - Maintaining type safety between the original and mocked functions
+ * The implementation function can return a partial instance of the class, which will be used
+ * as the constructed object when the mock is called with 'new'.
  *
  * @example
  * ```ts
- * // Mock a function with default implementation
- * const fetchData = async () => ({ id: 1, name: 'Test' });
- * const mockedFetch = xJet.mock(fetchData);
+ * class User {
+ *   name: string;
+ *   age: number;
+ *   constructor (name: string, age: number) {
+ *     this.name = name;
+ *     this.age = age;
+ *   }
+ * }
  *
- * // Mock with custom implementation
- * const mockedFetchCustom = xJet.mock(fetchData, async () => {
- *   return { id: 2, name: 'Custom Test' };
- * });
- *
- * test('uses mocked function', async () => {
- *   const result = await mockedFetchCustom();
- *   expect(result.name).toBe('Custom Test');
- *   expect(mockedFetchCustom).toHaveBeenCalled();
- * });
+ * const MockUser = mockImplementation(User, (name, age) => ({ name, age: age + 1 }));
+ * const user = new MockUser('Alice', 30); // user.age === 31
+ * MockUser.verify.called(); // passes
  * ```
  *
- * @see MockState
- * @see FunctionLikeType
- * @see ConstructorLikeType
- *
- * @since 1.2.0
+ * @since 1.2.2
  */
 
-export function mockImplementation<Method, Args extends Array<unknown> = [], Context = unknown>(
-    method: FunctionLikeType<Method, Args, Context> | ConstructorLikeType<Method, Args>,
-    implementation?: FunctionLikeType<Method, Args, Context>
-): MockState<Method, Args, Context>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mockImplementation<F extends abstract new (...args: any) => any>(
+    method: F,
+    implementation?: (...args: ConstructorParameters<F>) => Partial<InstanceType<F>>
+): MockState<(...args: ConstructorParameters<F>) => Partial<InstanceType<F>>>;
+
+/**
+ * Creates a mock implementation of the provided function.
+ *
+ * @param method - The function to mock
+ * @param implementation - Optional custom implementation that returns a partial result
+ * @returns The mock state associated with the mocked function
+ *
+ * @remarks
+ * This overload of the mockImplementation function allows for providing an implementation
+ * that returns a partial result object. This is particularly useful when mocking functions
+ * that return complex objects where only specific properties are relevant for testing.
+ *
+ * The implementation preserves the 'this' context from the original function, allowing
+ * for proper method mocking on objects.
+ *
+ * @example
+ * ```ts
+ * interface User {
+ *   id: number;
+ *   name: string;
+ *   email: string;
+ * }
+ *
+ * function getUser(id: number): User {
+ *   // real implementation
+ *   return { id, name: 'Real User', email: 'user@example.com' };
+ * }
+ *
+ * const mockGetUser = mockImplementation(getUser, (id) => ({ id, name: 'Mock User' }));
+ * const user = mockGetUser(123); // { id: 123, name: 'Mock User' }
+ * ```
+ *
+ * @since 1.2.2
+ */
+
+export function mockImplementation<F extends FunctionType>(
+    method: F,
+    implementation?: (...args: Parameters<F>) => Partial<ReturnType<F>>
+): MockState<(this: ThisParameterType<F>, ...args: Parameters<F>) => Partial<ReturnType<F>>>;
 
 /**
  * Creates a mock for an element with an optional custom implementation.
@@ -271,14 +245,13 @@ export function mockImplementation<Method, Args extends Array<unknown> = [], Con
 
 export function mockImplementation<Element = unknown>(
     item: Element,
-    implementation?: FunctionLikeType<Element>
-): MockState<Element>;
-
+    implementation?: () => Element
+): MockState<() => Element>;
 
 /**
  * Creates a mock for an item with an optional custom implementation.
  *
- * @param item - The item to mock
+ * @param element - The element to mock
  * @param implementation - Optional custom implementation to replace the original item's behavior
  * @returns A {@link MockState} instance that controls and tracks the mock
  *
@@ -297,15 +270,15 @@ export function mockImplementation<Element = unknown>(
  *
  * @example
  * ```ts
-* // Mock a function
-* const fetchData = async () => ({ id: 1, name: 'Test' });
-* const mockedFetch = xJet.mock(fetchData);
-*
-* // Mock with custom implementation
-* const mockedFetchCustom = xJet.mock(fetchData, async () => {
-*   return { id: 2, name: 'Custom Test' };
-* });
-* ```
+ * // Mock a function
+ * const fetchData = async () => ({ id: 1, name: 'Test' });
+ * const mockedFetch = xJet.mock(fetchData);
+ *
+ * // Mock with custom implementation
+ * const mockedFetchCustom = xJet.mock(fetchData, async () => {
+ *   return { id: 2, name: 'Custom Test' };
+ * });
+ * ```
  *
  * @see MockState
  * @see FunctionLikeType
@@ -314,47 +287,52 @@ export function mockImplementation<Element = unknown>(
  * @since 1.2.0
  */
 
-export function mockImplementation(item: unknown, implementation?: FunctionLikeType): unknown {
-    if (typeof item === 'function' && (item as MockState).xJetMock)
-        return item;
+export function mockImplementation(element: unknown, implementation?: FunctionType): MockState {
+    if (!element) throw new ExecutionError('xJet.mock element is not defined');
+    if (typeof element === 'function' && (element as MockState).xJetMock) return <MockState> element;
 
-    const parentObject = getParentObject(item);
-    if (!parentObject) {
-        throw new ExecutionError('xJet.mock item is not part of any global object');
+    const findObject = deepSearchObject(globalThis, element, (<FunctionType> element)?.name);
+    if (!findObject) {
+        throw new ExecutionError(
+            'Unable to mock this item: it was not found in any global object.\n' +
+            'If you are trying to mock a Proxy object, please use xJet.spyOn() instead.'
+        );
     }
 
-    const { name, object } = parentObject;
-    const originalMethod = Reflect.get(object, name);
+    const { parent, key } = getOwnProperty(findObject.parent, findObject.key);
+    const method = Reflect.get(parent, key);
 
-    if (typeof item === 'function' && item.prototype && !Object.getOwnPropertyDescriptor(item, 'prototype')?.writable) {
+    if (typeof method === 'function' && method.prototype && !Object.getOwnPropertyDescriptor(method, 'prototype')?.writable) {
         const mock = new MockState(
-            (...args: Array<unknown>) => new (item as ConstructorLikeType<unknown, Array<unknown>>)(...args),
+            (...args: Array<unknown>) => {
+                return new (method as ConstructorLikeType<unknown, Array<unknown>>)(...args);
+            },
             () => {
-                Reflect.set(object, name, originalMethod);
+                Reflect.set(parent, key, method);
             }
         );
 
-        Reflect.set(object, name, mock);
-        MockState.mocks.push(mock);
-        if(implementation) mock.mockImplementation(implementation);
+        Reflect.set(parent, key, mock);
+        MockState.mocks.add(new WeakRef(mock));
+        if (implementation) mock.mockImplementation(implementation);
 
-        return object[name];
+        return mock;
     }
 
-    if (typeof item === 'function') {
-        const mock = new MockState(<FunctionLikeType> item, () => {
-            Reflect.set(object, name, originalMethod);
+    if (typeof method === 'function') {
+        const mock = new MockState(<FunctionType> method, () => {
+            Reflect.set(parent, key, method);
         });
 
-        Reflect.set(object, name, mock);
-        MockState.mocks.push(mock);
-        if(implementation) mock.mockImplementation(implementation);
+        Reflect.set(parent, key, mock);
+        MockState.mocks.add(new WeakRef(mock));
+        if (implementation) mock.mockImplementation(implementation);
 
-        return object[name];
+        return mock;
     }
 
-    const mock = mockDescriptorProperty(object, name);
-    if(implementation) mock.mockImplementation(implementation);
+    const mock = mockDescriptorProperty(parent, key);
+    if (implementation) mock.mockImplementation(implementation);
 
     return mock;
 }

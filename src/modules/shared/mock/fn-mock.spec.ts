@@ -3,7 +3,7 @@
  */
 
 import { MockState } from '@shared/states/mock.state';
-import { fnImplementation, getParentObject, mockImplementation } from '@shared/mock/fn.mock';
+import { fnImplementation, mockImplementation } from '@shared/mock/fn.mock';
 
 /**
  * Tests
@@ -84,7 +84,10 @@ describe('mock', () => {
     test('should throw an error if the method is not part of an object', () => {
         const standaloneFunction = () => 'not part of an object';
 
-        expect(() => mockImplementation(standaloneFunction)).toThrow('xJet.mock item is not part of any global object');
+        expect(() => mockImplementation(standaloneFunction)).toThrow(
+            'Unable to mock this item: it was not found in any global object.\n' +
+            'If you are trying to mock a Proxy object, please use xJet.spyOn() instead.'
+        );
     });
 
     test('should create a new mock for a regular function and replace the parent object\'s original method', () => {
@@ -188,57 +191,5 @@ describe('mock', () => {
         mockedConstructor.mockRestore();
         new (<any> globalThis).ParentClass();
         expect(mockedConstructor).toHaveBeenCalledTimes(0);
-    });
-});
-
-describe('getParentObject', () => {
-    test('should return globalThis when the function exists in the global scope', () => {
-        function testGlobalFunction() {
-
-        }
-
-        // Define a global function
-        (<any> globalThis).testGlobalFunction = testGlobalFunction;
-        expect(getParentObject(testGlobalFunction)).toEqual({
-            name: 'testGlobalFunction',
-            object: expect.any(Object)
-        });
-    });
-
-    // Test case: Function is part of an object
-    test('should return the parent object when the function exists within it', () => {
-        const parentObject = {
-            testFunction: function () {}
-        };
-
-        (<any> globalThis).parentObject = parentObject;
-        expect(getParentObject(parentObject.testFunction)).toEqual({
-            name: 'testFunction',
-            object: parentObject
-        });
-    });
-
-    // Test case: Function does not exist in the global scope or an object
-    test('should return undefined when the function does not belong to any global or object scope', () => {
-        function standaloneFunction() {}
-        expect(getParentObject(standaloneFunction)).toBeUndefined();
-    });
-
-    // Test case: Function exists in nested objects
-    test('should not return a nested object, only direct parent', () => {
-        const nestedObject = {
-            parent: {
-                child: {
-                    nestedFunction: function () {}
-                }
-            }
-        };
-
-        expect(getParentObject(nestedObject.parent.child.nestedFunction)).toBeUndefined(); // Based on current logic from code
-    });
-
-    // Test case: Function has no explicit name
-    test('should return undefined for anonymous functions', () => {
-        expect(getParentObject(() => {})).toBeUndefined();
     });
 });
