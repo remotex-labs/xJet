@@ -312,7 +312,6 @@ export class SuitesService {
             inject: [ join(this.framework.distPath, 'shared.js') ],
             logLevel: 'silent',
             sourcemap: true,
-            keepNames: true,
             minifySyntax: true,
             preserveSymlinks: true,
             minifyWhitespace: true,
