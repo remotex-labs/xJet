@@ -56,12 +56,16 @@ const config: Array<xBuildConfig> = [
         bundleDeclaration: true,
         esbuild: {
             bundle: true,
-            minify: true,
+            minify: false,
             target: [ `node${ version.slice(1) }` ],
             outdir: 'dist',
             format: 'esm',
-            packages: 'bundle',
+            packages: 'external',
             sourcemap: 'linked',
+            minifySyntax: true,
+            preserveSymlinks: true,
+            minifyWhitespace: true,
+            minifyIdentifiers: false,
             entryPoints: {
                 'shared': 'src/modules/shared/shared.module.ts'
             }
