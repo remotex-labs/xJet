@@ -191,7 +191,7 @@ export class TimerService {
      * advanceTimersByTime(100); // nothing happens
      * ```
      *
-     * @since 1.2.4
+     * @since 1.3.0
      */
 
     clearAllTimers(): void {
@@ -362,7 +362,7 @@ export class TimerService {
      * This internal method is called by {@link advanceTimersByTime},
      * {@link runAllTimers}, and {@link runOnlyPendingTimers} to trigger
      * due timers.
-     * If `limitTimers` is provided, only timers included in that set are executed.
+     * If `limitTimers` are provided, only timers included in that set are executed.
      * Repeating timers (`setInterval`) are rescheduled automatically until
      * their next execution time exceeds the current simulated time.
      *
@@ -483,7 +483,7 @@ export function runAllTimers(): void {
  * timer advancement.
  *
  * It's useful for resetting the fake timer state between test cases to ensure
- * no lingering timers affect subsequent tests or for scenarios where you
+ * no lingering timers affect further tests or for scenarios where you
  * need to abort all pending operations.
  *
  * @example
@@ -493,10 +493,10 @@ export function runAllTimers(): void {
  * setTimeout(() => console.log('B'), 200);
  *
  * clearAllTimers(); // removes all scheduled timers
- * advanceTimersByTime(1000); // nothing happens, no any logs
+ * advanceTimersByTime(1000); // nothing happens, not show any logs
  * ```
  *
- * @since 1.2.4
+ * @since 1.3.0
  */
 
 export function clearAllTimers(): void {
