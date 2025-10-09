@@ -61,8 +61,10 @@ declare global {
         const useFakeTimers: typeof FakeTimer.useFakeTimers;
         const useRealTimers: typeof FakeTimer.useRealTimers;
         const clearAllTimers: typeof FakeTimer.clearAllTimers;
+        const runAllTimersAsync: typeof FakeTimer.runAllTimersAsync;
         const advanceTimersByTime: typeof FakeTimer.advanceTimersByTime;
         const runOnlyPendingTimers: typeof FakeTimer.runOnlyPendingTimers;
+        const runOnlyPendingTimersAsync: typeof FakeTimer.runOnlyPendingTimersAsync;
     }
 
     const it: TestDirectiveInterface;

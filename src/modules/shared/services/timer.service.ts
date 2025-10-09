@@ -191,7 +191,7 @@ export class TimerService {
      * advanceTimersByTime(100); // nothing happens
      * ```
      *
-     * @since 1.2.4
+     * @since 1.3.0
      */
 
     clearAllTimers(): void {
@@ -300,6 +300,61 @@ export class TimerService {
     }
 
     /**
+     * Asynchronous equivalent of {@link runAllTimers}.
+     *
+     * @remarks
+     * This method first yields to the event loop to allow any pending promises
+     * to resolve before executing all remaining fake timers.
+     * It ensures a deterministic sequence when timers and microtasks coexist.
+     *
+     * @example
+     * ```ts
+     * useFakeTimers();
+     * Promise.resolve().then(() => console.log('microtask'));
+     * setTimeout(() => console.log('timer'), 0);
+     * await timerService.runAllTimersAsync();
+     * // Logs:
+     * // microtask
+     * // timer
+     * ```
+     *
+     * @since 1.3.0
+     */
+
+    async runAllTimersAsync(): Promise<void> {
+        await Promise.resolve();
+        this.runAllTimers();
+    }
+
+    /**
+     * Asynchronous equivalent of {@link runOnlyPendingTimers}.
+     *
+     * @remarks
+     * This method first yields to the event loop to allow any pending promises
+     * to resolve before executing only currently pending fake timers.
+     * Timers scheduled during execution will not run until explicitly advanced later.
+     *
+     * @example
+     * ```ts
+     * useFakeTimers();
+     * setTimeout(() => {
+     *   console.log('first');
+     *   setTimeout(() => console.log('second'), 100);
+     * }, 100);
+     * await timerService.runOnlyPendingTimersAsync();
+     * // Logs:
+     * // first
+     * ```
+     *
+     * @since 1.3.0
+     */
+
+    async runOnlyPendingTimersAsync(): Promise<void> {
+        await Promise.resolve();
+        this.runOnlyPendingTimers();
+    }
+
+    /**
      * Executes all timers whose scheduled time is less than or equal to the
      * current simulated time (`this.now`).
      *
@@ -307,7 +362,7 @@ export class TimerService {
      * This internal method is called by {@link advanceTimersByTime},
      * {@link runAllTimers}, and {@link runOnlyPendingTimers} to trigger
      * due timers.
-     * If `limitTimers` is provided, only timers included in that set are executed.
+     * If `limitTimers` are provided, only timers included in that set are executed.
      * Repeating timers (`setInterval`) are rescheduled automatically until
      * their next execution time exceeds the current simulated time.
      *
@@ -428,7 +483,7 @@ export function runAllTimers(): void {
  * timer advancement.
  *
  * It's useful for resetting the fake timer state between test cases to ensure
- * no lingering timers affect subsequent tests or for scenarios where you
+ * no lingering timers affect further tests or for scenarios where you
  * need to abort all pending operations.
  *
  * @example
@@ -438,10 +493,10 @@ export function runAllTimers(): void {
  * setTimeout(() => console.log('B'), 200);
  *
  * clearAllTimers(); // removes all scheduled timers
- * advanceTimersByTime(1000); // nothing happens, no any logs
+ * advanceTimersByTime(1000); // nothing happens, not show any logs
  * ```
  *
- * @since 1.2.4
+ * @since 1.3.0
  */
 
 export function clearAllTimers(): void {
@@ -503,3 +558,52 @@ export function advanceTimersByTime(ms: number = 0): void {
     inject(TimerService).advanceTimersByTime(ms);
 }
 
+/**
+ * Asynchronous equivalent of {@link runAllTimers}.
+ *
+ * @remarks
+ * Yields to the event loop before running all pending fake timers.
+ * Useful when working with both Promises and fake timers.
+ *
+ * @example
+ * ```ts
+ * xJet.useFakeTimers();
+ * Promise.resolve().then(() => console.log('promise done'));
+ * setTimeout(() => console.log('timeout done'), 0);
+ * await xJet.runAllTimersAsync();
+ * // Logs:
+ * // promise done
+ * // timeout done
+ * ```
+ *
+ * @since 1.3.0
+ */
+
+export async function runAllTimersAsync(): Promise<void> {
+    await inject(TimerService).runAllTimersAsync();
+}
+
+/**
+ * Asynchronous equivalent of {@link runOnlyPendingTimers}.
+ *
+ * @remarks
+ * Yields to the event loop before running only timers that are currently pending.
+ * Any timers scheduled by those callbacks will not be executed until a later call.
+ *
+ * @example
+ * ```ts
+ * useFakeTimers();
+ * setTimeout(() => {
+ *   console.log('first');
+ *   setTimeout(() => console.log('second'), 100);
+ * }, 100);
+ * await runOnlyPendingTimersAsync();
+ * // Logs only "first"
+ * ```
+ *
+ * @since 1.3.0
+ */
+
+export async function runOnlyPendingTimersAsync(): Promise<void> {
+    await inject(TimerService).runOnlyPendingTimersAsync();
+}
