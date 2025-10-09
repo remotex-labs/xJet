@@ -5,7 +5,7 @@
 import type { Module } from 'module';
 
 /**
- * Module interception utility that enhances Node.js require {@link NodeJS.Require} functionality to enable mocking.
+ * Module interception utility that enhances Node.js requires {@link NodeJS.Require} functionality to enable mocking.
  *
  * @remarks
  * This module replaces the global `require` function with an enhanced version that:
@@ -50,7 +50,7 @@ if(require) {
     const original = require;
 
     /**
-     * Enhanced require function that wraps the original Node.js require to enable mocking.
+     * Enhanced requires function that wraps the original Node.js `require` to enable mocking.
      *
      * @param moduleName - The name or path of the module to require
      * @returns The exports from the required module, possibly transformed for mockability
@@ -71,12 +71,10 @@ if(require) {
      */
 
     const fn = (moduleName: string): unknown => {
-        if (!original.cache[original.resolve(moduleName)]) {
-            original(moduleName);
-        }
-
-        const resolved: Module & { internal?: boolean } = original.cache[original.resolve(moduleName)]!;
-        if (resolved?.internal) return resolved.exports;
+        const resolvedPath = original.resolve(moduleName);
+        const exports = original(moduleName);
+        const resolved = original.cache[resolvedPath] as (Module & { internal?: boolean }) | undefined;
+        if (!resolved || resolved.internal) return exports;
 
         let result: unknown;
         if (typeof resolved.exports === 'function') {
@@ -87,14 +85,12 @@ if(require) {
             result = resolved.exports;
         }
 
-        if (resolved) {
-            resolved.exports = result;
-            resolved.internal = true;
-        }
+        resolved.exports = result;
+        resolved.internal = true;
 
         return result;
     };
 
     Object.assign(fn, original);
-    globalThis.require = <typeof require> fn;
+    globalThis.require = fn as typeof require;
 }
