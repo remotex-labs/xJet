@@ -90,8 +90,10 @@ const setupGlobals = (): void => {
         useFakeTimers: FakeTimer.useFakeTimers,
         useRealTimers: FakeTimer.useRealTimers,
         clearAllTimers: FakeTimer.clearAllTimers,
+        runAllTimersAsync: FakeTimer.runAllTimersAsync,
         advanceTimersByTime: FakeTimer.advanceTimersByTime,
-        runOnlyPendingTimers: FakeTimer.runOnlyPendingTimers
+        runOnlyPendingTimers: FakeTimer.runOnlyPendingTimers,
+        runOnlyPendingTimersAsync: FakeTimer.runOnlyPendingTimersAsync
     };
 
     globals.expect = xExpect;
