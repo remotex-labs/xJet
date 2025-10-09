@@ -2,6 +2,7 @@
  * Imports
  */
 
+import '@components/require.component';
 import { xExpect } from '@remotex-labs/xjet-expect';
 import { MockState } from '@shared/states/mock.state';
 import { SuiteState } from '@shared/states/suite.state';

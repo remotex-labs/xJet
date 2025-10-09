@@ -2,6 +2,7 @@
  * Import will remove at compile time
  */
 
+import type { PartialResolvedType } from '@shared/mock/interfaces/fn-mock.interface';
 import type { ConstructorLikeType, FunctionLikeType, FunctionType } from '@remotex-labs/xjet-expect';
 import type { MockProxyInterface, MockProxyStateInterface } from '@shared/mock/interfaces/spy-mock.interface';
 
@@ -255,7 +256,7 @@ export function spyOnImplementation<T extends object, K extends keyof T>(target:
     T[K] extends FunctionType ?
         MockState<(
             this: ThisParameterType<T[K]>, ...args: Parameters<T[K]>
-        ) => ReturnType<T[K]>>
+        ) => PartialResolvedType<ReturnType<T[K]>>>
         : MockState<() => T[K]>;
 
 /**

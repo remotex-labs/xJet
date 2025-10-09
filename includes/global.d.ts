@@ -4,6 +4,39 @@
 
 declare global {
     /**
+     * TypeScript declaration for Node.js require function in browser and Node.js environments.
+     *
+     * @remarks
+     * This declaration allows TypeScript to recognize the global `require` function
+     * which may be present in Node.js environments but not in browsers.
+     * The union type `undefined | NodeJS.Require` enables code to:
+     *
+     * 1. Check if `require` exists before using it
+     * 2. Access proper TypeScript typings for the require function when available
+     * 3. Support both Node.js and browser environments with the same codebase
+     *
+     * In browser environments, `require` will be `undefined`, while in Node.js
+     * it will have the full `NodeJS.Require` interface with properties like
+     * `require.cache` and methods like `require.resolve`.
+     *
+     * @example
+     * ```ts
+     * // Safe usage with type checking
+     * if (require) {
+     *   const fs = require('fs');
+     *   // Use Node.js modules safely
+     * } else {
+     *   // Browser fallback logic
+     * }
+     * ```
+     *
+     * @see NodeJS.Require - The full require interface from @types/node
+     * @since 1.2.2
+     */
+
+    declare var require: undefined | NodeJS.Require;
+
+    /**
      * Environment variable flag that indicates if color output should be disabled.
      *
      * @default undefined

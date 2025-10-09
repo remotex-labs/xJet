@@ -284,6 +284,8 @@ export class SuiteState {
             dispatch(
                 encodeErrorSchema(<Error>e, __XJET.runtime.suiteId, __XJET.runtime.runnerId)
             );
+        } finally {
+            xJet.restoreAllMocks();
         }
     }
 
