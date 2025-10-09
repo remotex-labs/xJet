@@ -89,6 +89,7 @@ const setupGlobals = (): void => {
         runAllTimers: FakeTimer.runAllTimers,
         useFakeTimers: FakeTimer.useFakeTimers,
         useRealTimers: FakeTimer.useRealTimers,
+        clearAllTimers: FakeTimer.clearAllTimers,
         advanceTimersByTime: FakeTimer.advanceTimersByTime,
         runOnlyPendingTimers: FakeTimer.runOnlyPendingTimers
     };

@@ -60,6 +60,7 @@ declare global {
         const runAllTimers: typeof FakeTimer.runAllTimers;
         const useFakeTimers: typeof FakeTimer.useFakeTimers;
         const useRealTimers: typeof FakeTimer.useRealTimers;
+        const clearAllTimers: typeof FakeTimer.clearAllTimers;
         const advanceTimersByTime: typeof FakeTimer.advanceTimersByTime;
         const runOnlyPendingTimers: typeof FakeTimer.runOnlyPendingTimers;
     }

@@ -166,11 +166,36 @@ export class TimerService {
      */
 
     useRealTimers(): void {
+        this.timers.clear();
         globalThis.setTimeout = this.originalSetTimeout;
         globalThis.clearTimeout = this.originalClearTimeout;
         globalThis.setInterval = this.originalSetInterval;
         globalThis.clearInterval = this.originalClearInterval;
         Date.now = this.originalDateNow;
+    }
+
+    /**
+     * Clears all active fake timers.
+     *
+     * @remarks
+     * This method removes every timer currently stored in {@link timers},
+     * effectively resetting the fake timer state without advancing time.
+     * It is useful for cleaning up between tests to ensure no lingering
+     * scheduled callbacks remain.
+     *
+     * @example
+     * ```ts
+     * useFakeTimers();
+     * setTimeout(() => console.log('A'), 100);
+     * clearAllTimers(); // removes all scheduled timers
+     * advanceTimersByTime(100); // nothing happens
+     * ```
+     *
+     * @since 1.2.4
+     */
+
+    clearAllTimers(): void {
+        this.timers.clear();
     }
 
     /**
@@ -394,6 +419,34 @@ export function runAllTimers(): void {
     inject(TimerService).runAllTimers();
 }
 
+/**
+ * Removes all scheduled fake timers from the {@link TimerService}.
+ *
+ * @remarks
+ * This function clears all active timers registered in the shared timer service,
+ * effectively canceling any pending callbacks that would have run during
+ * timer advancement.
+ *
+ * It's useful for resetting the fake timer state between test cases to ensure
+ * no lingering timers affect subsequent tests or for scenarios where you
+ * need to abort all pending operations.
+ *
+ * @example
+ * ```ts
+ * useFakeTimers();
+ * setTimeout(() => console.log('A'), 100);
+ * setTimeout(() => console.log('B'), 200);
+ *
+ * clearAllTimers(); // removes all scheduled timers
+ * advanceTimersByTime(1000); // nothing happens, no any logs
+ * ```
+ *
+ * @since 1.2.4
+ */
+
+export function clearAllTimers(): void {
+    inject(TimerService).clearAllTimers();
+}
 
 /**
  * Executes only the timers that are pending at the time of invocation.
@@ -419,6 +472,7 @@ export function runAllTimers(): void {
  *
  * @since 1.1.0
  */
+
 export function runOnlyPendingTimers(): void {
     inject(TimerService).runOnlyPendingTimers();
 }
