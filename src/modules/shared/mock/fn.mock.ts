@@ -2,8 +2,8 @@
  * Import will remove at compile time
  */
 
-import type { MockableFunctionInterface } from '@shared/mock/interfaces/fn-mock.interface';
 import type { ConstructorLikeType, FunctionLikeType, FunctionType } from '@remotex-labs/xjet-expect';
+import type { MockableFunctionInterface, PartialResolvedType } from '@shared/mock/interfaces/fn-mock.interface';
 
 /**
  * Imports
@@ -152,8 +152,8 @@ export function fnImplementation<ReturnType, Args extends Array<unknown>, Contex
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function mockImplementation<F extends abstract new (...args: any) => any>(
     method: F,
-    implementation?: (...args: ConstructorParameters<F>) => Partial<InstanceType<F>>
-): MockState<(...args: ConstructorParameters<F>) => Partial<InstanceType<F>>>;
+    implementation?: (...args: ConstructorParameters<F>) => PartialResolvedType<InstanceType<F>>
+): MockState<(...args: ConstructorParameters<F>) => PartialResolvedType<InstanceType<F>>>;
 
 /**
  * Creates a mock implementation of the provided function.
@@ -192,8 +192,8 @@ export function mockImplementation<F extends abstract new (...args: any) => any>
 
 export function mockImplementation<F extends FunctionType>(
     method: F,
-    implementation?: (...args: Parameters<F>) => Partial<ReturnType<F>>
-): MockState<(this: ThisParameterType<F>, ...args: Parameters<F>) => Partial<ReturnType<F>>>;
+    implementation?: (...args: Parameters<F>) => PartialResolvedType<ReturnType<F>>
+): MockState<(this: ThisParameterType<F>, ...args: Parameters<F>) => PartialResolvedType<ReturnType<F>>>;
 
 /**
  * Creates a mock for an element with an optional custom implementation.

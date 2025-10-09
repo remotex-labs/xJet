@@ -36,3 +36,26 @@ export interface MockableFunctionInterface<F extends FunctionType> extends MockS
     (this: ThisParameterType<F>, ...args: Parameters<F>): ReturnType<F>;
 }
 
+/**
+ * Makes properties of a type or its resolved promise value optional.
+ *
+ * @template T - The type to transform
+ *
+ * @remarks
+ * If T is a Promise-like type, this utility unwraps it and makes the resolved value's
+ * properties optional. Otherwise, it directly makes T's properties optional.
+ *
+ * @example
+ * ```ts
+ * // Makes properties of User optional
+ * type MaybeUser = PartialResolvedType<User>;
+ *
+ * // Makes properties of resolved User optional
+ * type MaybeAsyncUser = PartialResolvedType<Promise<User>>;
+ * ```
+ *
+ * @since 1.2.2
+ */
+
+export type PartialResolvedType<T> =
+    T extends PromiseLike<infer U> ? Promise<Partial<U>> : Partial<T>;
