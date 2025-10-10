@@ -187,12 +187,14 @@ describe('ExternalService', () => {
             const runner = createFakeRunner('my-runner');
             runner.id = 'runner-id';
             service.runners.set('runner-id', runner);
+            (service as any).suites.set('compiled.js', '123');
+            (service as any).suites.set('123', 'real.js');
 
-            await (service as any).executeInRunner('console.log("hi")', 'suite1', runner);
+            await (service as any).executeInRunner('console.log("hi")', '123', runner);
 
             expect(runner.dispatch).toHaveBeenCalledWith(
                 expect.any(Buffer),
-                'suite1'
+                '123'
             );
             expect(withTimeout).toHaveBeenCalled();
         });
@@ -200,8 +202,10 @@ describe('ExternalService', () => {
 
     describe('prepareTestCodeWithContext', () => {
         test('should prefix code with __XJET context', () => {
-            const result = (service as any).prepareTestCodeWithContext('console.log(1)', { a: 1 });
-            expect(result).toMatch(/^globalThis.__XJET =/);
+            const result = (service as any).prepareTestCodeWithContext('console.log(1)', {
+                a: 1, runtime: { path: 'src/index.spec.ts' }
+            });
+            expect(result).toMatch(/^__dirname=\"src\";__filename=\"src\/index.spec.ts\";globalThis.__XJET =/);
             expect(result).toContain('console.log(1)');
         });
     });
