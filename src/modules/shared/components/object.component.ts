@@ -48,7 +48,7 @@ import type { DeepSearchInterface } from '@shared/components/interfaces/object.i
  */
 
 export function deepSearchObject(
-    target: Record<string | symbol, unknown>, element: unknown, key?: string, maxDepth: number = 3
+    target: Record<string | symbol, unknown>, element: unknown, key?: string | symbol, maxDepth: number = 3
 ): DeepSearchInterface | null {
     const visited = new WeakSet<object>();
 
