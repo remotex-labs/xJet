@@ -2,16 +2,15 @@
  * Import will remove at compile time
  */
 
-import type { RunnerInterface } from '@targets/interfaces/traget.interface';
 import type { TranspileFileType } from '@services/interfaces/transpiler-service.interface';
 import type { TestRunnerInterface } from '@configuration/interfaces/configuration.interface';
+import type { RunnerInterface, RuntimeConfigInterface } from '@targets/interfaces/traget.interface';
 
 /**
  * Imports
  */
-
 import yargs from 'yargs';
-import { relative } from 'path';
+import { dirname, relative } from 'path';
 import { xJetError } from '@errors/xjet.error';
 import { serializeError } from '@remotex-labs/xjet-expect';
 import { withTimeout } from '@components/timeout.component';
@@ -144,7 +143,7 @@ export class ExternalService extends AbstractTarget {
 
         for (let i = 0; i < runners.length; i++) {
             const runner = runners[i];
-            if(runner?.disconnect) {
+            if (runner?.disconnect) {
                 disconnectionPromises.push(runner?.disconnect?.());
             }
         }
@@ -371,14 +370,14 @@ export class ExternalService extends AbstractTarget {
      */
 
     private async executeInRunner(testCode: string, suiteId: string, runner: TestRunnerInterface): Promise<void> {
-        const runtimeContext = {
+        const runtimeContext: Record<string, RuntimeConfigInterface> = {
             runtime: {
                 bail: this.config.bail,
                 path: this.suites.get(suiteId)!,
                 filter: this.config.filter,
                 timeout: this.config.timeout,
                 suiteId: suiteId,
-                runnerId: runner.id,
+                runnerId: runner.id!,
                 randomize: this.config.randomize
             }
         };
@@ -416,7 +415,12 @@ export class ExternalService extends AbstractTarget {
      * @since 1.0.0
      */
 
-    private prepareTestCodeWithContext(testCode: string, context: Record<string, unknown>): string {
-        return `globalThis.__XJET = ${ JSON.stringify(context) }; ${ testCode }`;
+    private prepareTestCodeWithContext(testCode: string, context: Record<string, RuntimeConfigInterface>): string {
+        const __filename = context.runtime.path;
+        const __dirname = dirname(__filename);
+
+        return `__dirname=${ JSON.stringify(__dirname) };` +
+            `__filename=${ JSON.stringify(__filename) };` +
+            `globalThis.__XJET = ${ JSON.stringify(context) }; ${ testCode }`;
     }
 }

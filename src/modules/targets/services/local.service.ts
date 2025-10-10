@@ -9,9 +9,9 @@ import type { ModuleInterface, TranspileFileType } from '@services/interfaces/tr
  * Imports
  */
 
-import { relative } from 'path';
 import * as process from 'process';
 import { createRequire } from 'module';
+import { dirname, relative } from 'path';
 import { sandboxExecute } from '@services/vm.service';
 import { serializeError } from '@remotex-labs/xjet-expect';
 import { Injectable } from '@symlinks/services/inject.service';
@@ -177,6 +177,7 @@ export class LocalService extends AbstractTarget {
      */
 
     private async executeInSandbox(testCode: string, transpileFilePath: string, suiteId: string): Promise<void> {
+        const path = this.suites.get(suiteId)!;
         const module: ModuleInterface = { exports: {} };
         const require = createRequire(transpileFilePath);
 
@@ -195,10 +196,12 @@ export class LocalService extends AbstractTarget {
             clearTimeout,
             clearInterval,
             process: safeProcess,
+            __dirname: dirname(path),
+            __filename: path,
             __XJET: {
                 runtime: {
                     bail: this.config.bail,
-                    path: this.suites.get(suiteId)!,
+                    path: path,
                     filter: this.config.filter,
                     timeout: this.config.timeout,
                     suiteId: suiteId,
