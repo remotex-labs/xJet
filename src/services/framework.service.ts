@@ -2,7 +2,6 @@
  * Imports
  */
 
-import url from 'url';
 import { dirname } from 'path';
 import { normalize } from 'path';
 import { readFileSync } from 'fs';
@@ -85,7 +84,7 @@ export class FrameworkService {
      */
 
     constructor() {
-        this.filePath = url.fileURLToPath(import.meta.url);
+        this.filePath = import.meta.filename ?? __filename;
         this.setSourceFile(this.filePath);
         this.frameworkSourceMap = this.getSourceMap(this.filePath)!;
 
