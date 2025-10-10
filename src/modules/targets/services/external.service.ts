@@ -10,6 +10,7 @@ import type { RunnerInterface, RuntimeConfigInterface } from '@targets/interface
  * Imports
  */
 import yargs from 'yargs';
+import { pathToFileURL } from 'url';
 import { dirname, relative } from 'path';
 import { xJetError } from '@errors/xjet.error';
 import { serializeError } from '@remotex-labs/xjet-expect';
@@ -419,7 +420,8 @@ export class ExternalService extends AbstractTarget {
         const __filename = context.runtime.path;
         const __dirname = dirname(__filename);
 
-        return `__dirname=${ JSON.stringify(__dirname) };` +
+        return `globalThis.import_meta = { url: "${ pathToFileURL(__filename) }" };` +
+            `__dirname=${ JSON.stringify(__dirname) };` +
             `__filename=${ JSON.stringify(__filename) };` +
             `globalThis.__XJET = ${ JSON.stringify(context) }; ${ testCode }`;
     }

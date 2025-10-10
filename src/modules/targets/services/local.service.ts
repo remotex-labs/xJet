@@ -10,6 +10,7 @@ import type { ModuleInterface, TranspileFileType } from '@services/interfaces/tr
  */
 
 import * as process from 'process';
+import { pathToFileURL } from 'url';
 import { createRequire } from 'module';
 import { dirname, relative } from 'path';
 import { sandboxExecute } from '@services/vm.service';
@@ -196,6 +197,9 @@ export class LocalService extends AbstractTarget {
             clearTimeout,
             clearInterval,
             process: safeProcess,
+            dispatch: this.dispatch.bind(this),
+            import_meta: pathToFileURL(path),
+
             __dirname: dirname(path),
             __filename: path,
             __XJET: {
@@ -208,8 +212,7 @@ export class LocalService extends AbstractTarget {
                     runnerId: this.runnerId,
                     randomize: this.config.randomize
                 }
-            },
-            dispatch: this.dispatch.bind(this)
+            }
         };
 
         await sandboxExecute(testCode, sandboxContext);
