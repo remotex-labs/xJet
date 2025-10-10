@@ -52,7 +52,7 @@ export function mockDescriptorProperty<T extends object>(target: T, key: string 
     const mockInstance = new MockState(() => original, () => {
         Reflect.set(target, key, originalDescriptor.value);
         Object.defineProperty(target, key, originalDescriptor);
-    }, 'xJet.spyOn()');
+    }, `xJet.spyOn(${ String(key) })`);
 
     MockState.mocks.add(new WeakRef(mockInstance));
     Object.defineProperty(target, key, {
