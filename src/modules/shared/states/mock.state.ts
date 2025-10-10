@@ -2,9 +2,10 @@
  * Import will remove at compile time
  */
 
+import type { FunctionType } from '@remotex-labs/xjet-expect';
 import type { BoundInterface } from '@shared/components/interfaces/polyfill-component.interface';
-import type { FunctionType, RejectedValueType, ResolvedValueType } from '@remotex-labs/xjet-expect';
 import type { MockInvocationResultInterface } from '@shared/states/interfaces/mock-state.interface';
+import type { RejectedValueType, ResolvedValueType } from '@shared/states/interfaces/mock-state.interface';
 import type { ImplementationType, MocksStateInterface } from '@shared/states/interfaces/mock-state.interface';
 
 /**
@@ -376,7 +377,7 @@ export class MockState<F extends FunctionType = FunctionType> extends Function {
     mockRestore(): this {
         this.mockReset();
         const restore = this.restore?.();
-        if(typeof restore === 'function') this.implementation = restore;
+        if (typeof restore === 'function') this.implementation = restore;
         else this.implementation = this.originalImplementation;
 
         return this;
@@ -898,7 +899,7 @@ export class MockState<F extends FunctionType = FunctionType> extends Function {
 
     private invokeGet(target: this, property: string | symbol): unknown {
         const isProperty = Reflect.has(target, property);
-        if(isProperty) return Reflect.get(target, property);
+        if (isProperty) return Reflect.get(target, property);
 
         return Reflect.get(target.originalImplementation, property);
     }
