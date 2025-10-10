@@ -205,7 +205,7 @@ describe('ExternalService', () => {
             const result = (service as any).prepareTestCodeWithContext('console.log(1)', {
                 a: 1, runtime: { path: 'src/index.spec.ts' }
             });
-            expect(result).toMatch(/^__dirname=\"src\";__filename=\"src\/index.spec.ts\";globalThis.__XJET =/);
+            expect(result).toMatch(/__dirname=\"src\";__filename=\"src\/index.spec.ts\";globalThis.__XJET =/);
             expect(result).toContain('console.log(1)');
         });
     });

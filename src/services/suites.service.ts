@@ -315,7 +315,10 @@ export class SuitesService {
             minifySyntax: true,
             preserveSymlinks: true,
             minifyWhitespace: true,
-            minifyIdentifiers: false
+            minifyIdentifiers: false,
+            define: {
+                'import.meta': 'import_meta'
+            }
         });
     }
 }
