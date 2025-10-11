@@ -154,7 +154,7 @@ export class SuitesService {
     async executeSuites(): Promise<void> {
         const specsFiles = getSpecFiles(this.framework.rootPath, this.config);
         if (Object.keys(specsFiles).length === 0) {
-            if(this.config.suites.length > 0)
+            if (this.config.suites.length > 0)
                 throw xterm.redBright('No test files found for ') + xterm.greenBright(this.config.suites.join(', '));
 
             throw xterm.redBright('No test files found for ') + xterm.greenBright(this.config.files.join(', '));
@@ -200,8 +200,20 @@ export class SuitesService {
 
     private async exec(message: MessageService, specsFiles: Record<string, string>): Promise<void> {
         message.reporter.init?.(Object.values(specsFiles), message.target.getRunners());
-        const transpiled = await this.transpileSuites(specsFiles);
-        await this.target.executeSuites(transpiled, specsFiles);
+        this.target.startQueue(specsFiles);
+
+        const tasks: Array<Promise<void>> = [];
+        for await (const [ key, value ] of Object.entries(specsFiles)) {
+            tasks.push(new Promise(async (resolve) => {
+                const transpiled = await this.transpileSuites({ [key]: value });
+                await Promise.all(this.target.executeSuites(transpiled[0]));
+
+                resolve();
+            }));
+        }
+
+        await Promise.all(tasks);
+
         message.reporter.finish?.();
     }
 

@@ -4,7 +4,7 @@
 
 import type { DecodedPacketType } from '@packets/packets.module';
 import type { FunctionLikeType, FunctionType } from '@remotex-labs/xjet-expect';
-import type { TranspileFileType } from '@services/interfaces/transpiler-service.interface';
+import type { TranspileFileInterface, TranspileFileType } from '@services/interfaces/transpiler-service.interface';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
 import type { RunnerInterface, RunningSuitesInterface } from '@targets/interfaces/traget.interface';
 
@@ -157,30 +157,9 @@ export abstract class AbstractTarget {
 
     abstract getRunners(): Array<RunnerInterface>;
 
-    /**
-     * Executes the provided test or transpiled suites on this target.
-     *
-     * @param transpileSuites - The transpiled suite files to execute.
-     * @param suites - A record mapping original file names to their content.
-     *
-     * @returns A `Promise` that resolves once all suites have been executed.
-     *
-     * @remarks
-     * This abstract method must be implemented by subclasses of `AbstractTarget`.
-     * It should handle the execution of all provided suites, applying them to the
-     * target environment and using the corresponding original files as needed.
-     *
-     * Implementations may include:
-     * - Transpiling or preparing files for execution
-     * - Running tests or suites in the target environment
-     * - Collecting and reporting results or errors
-     *
-     * @see {@link initTarget}, {@link disconnect}, {@link freeTarget} for target lifecycle methods.
-     *
-     * @since 1.0.0
-     */
+    abstract startQueue(suites: Record<string, string>): void;
 
-    abstract executeSuites(transpileSuites: TranspileFileType, suites: Record<string, string>): Promise<void>;
+    abstract executeSuites(transpileSuites: TranspileFileInterface): Array<Promise<void>>;
 
     /**
      * Subscribe to log events emitted during test execution.

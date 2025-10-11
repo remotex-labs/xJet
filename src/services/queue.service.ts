@@ -9,6 +9,7 @@ import type { TaskInterface } from '@services/interfaces/queue-service.interface
  */
 
 import { Injectable } from '@symlinks/services/inject.service';
+import { isPromise } from '@remotex-labs/xjet-expect';
 
 /**
  * A service that manages asynchronous tasks with configurable concurrency.
@@ -165,13 +166,16 @@ export class QueueService {
      * @since 1.0.0
      */
 
-    enqueue<T>(task: () => Promise<T>, runnerId?: string): Promise<T> {
+    enqueue<T>(task: Promise<T> | (() => Promise<T>), runnerId?: string): Promise<T> {
         return new Promise<T>((resolve, reject) => {
             // Wrap the task to handle its completion
             const wrappedTask = async (): Promise<void> => {
                 try {
-                    const result = await task();
-                    resolve(result);
+                    if(isPromise(task)) {
+                        resolve(await task);
+                    } else {
+                        resolve(await task());
+                    }
                 } catch (error) {
                     reject(error);
                 } finally {

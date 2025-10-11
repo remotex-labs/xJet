@@ -3,7 +3,11 @@
  */
 
 import type { RunnerInterface } from '@targets/interfaces/traget.interface';
-import type { ModuleInterface, TranspileFileType } from '@services/interfaces/transpiler-service.interface';
+import type {
+    ModuleInterface,
+    TranspileFileInterface,
+    TranspileFileType
+} from '@services/interfaces/transpiler-service.interface';
 
 /**
  * Imports
@@ -109,47 +113,16 @@ export class LocalService extends AbstractTarget {
         ];
     }
 
-    /**
-     * Executes the provided transpiled test suites in a sandboxed local environment.
-     *
-     * @param transpileSuites - An array of transpiled test files to execute.
-     * @param suites - A record mapping original suite names to their file paths.
-     *
-     * @remarks
-     * This method registers the provided suites using `setSuites` and queues each
-     * transpiled test file for execution using the internal queue. Each suite is
-     * executed in the local sandbox via `executeTestWithErrorHandling`.
-     *
-     * Errors during execution are captured and emitted via the `eventEmitter`, but
-     * do not halt the execution of other suites. The queue ensures controlled,
-     * asynchronous execution of all tasks.
-     *
-     * @example
-     * ```ts
-     * await localService.executeSuites(transpileFiles, originalFiles);
-     * ```
-     *
-     * @see {@link setSuites} to register suites internally.
-     * @see {@link executeTestWithErrorHandling} for individual suite execution logic.
-     *
-     * @since 1.0.0
-     */
-
-    async executeSuites(transpileSuites: TranspileFileType, suites: Record<string, string>): Promise<void> {
-        this.setSuites(suites);
-        const testExecutionTasks: Array<Promise<void>> = [];
-
-        for (const transpile of transpileSuites) {
-            const relativePath = relative(this.framework.rootPath, transpile.path)
-                .replace(/\.[^/.]+$/, '');
-
-            testExecutionTasks.push(this.queue.enqueue(async () => {
-                return this.executeTestWithErrorHandling(transpile.code, transpile.path, relativePath);
-            }));
-        }
-
+    startQueue(suites: Record<string, string>): void {
         this.queue.start();
-        await Promise.allSettled(testExecutionTasks);
+        this.setSuites(suites);
+    }
+
+    executeSuites(transpileSuite: TranspileFileInterface): Array<Promise<void>> {
+        const relativePath = relative(this.framework.rootPath, transpileSuite.path).replace(/\.[^/.]+$/, '');
+        const task = this.executeTestWithErrorHandling(transpileSuite.code, transpileSuite.path, relativePath);
+
+        return [ this.queue.enqueue(task) ];
     }
 
     /**

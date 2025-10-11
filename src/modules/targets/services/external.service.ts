@@ -2,7 +2,7 @@
  * Import will remove at compile time
  */
 
-import type { TranspileFileType } from '@services/interfaces/transpiler-service.interface';
+import type { TranspileFileInterface, TranspileFileType } from '@services/interfaces/transpiler-service.interface';
 import type { TestRunnerInterface } from '@configuration/interfaces/configuration.interface';
 import type { RunnerInterface, RuntimeConfigInterface } from '@targets/interfaces/traget.interface';
 
@@ -211,53 +211,22 @@ export class ExternalService extends AbstractTarget {
         }));
     }
 
-    /**
-     * Executes the provided transpiled test suites on all registered runners.
-     *
-     * @param transpileSuites - An array of transpiled test files to execute.
-     * @param suites - A record mapping original suite names to their file paths.
-     *
-     * @remarks
-     * This method registers the provided suites internally via `setSuites` and
-     * queues each transpiled suite for execution on every connected runner.
-     *
-     * Each suite is executed asynchronously, and errors are handled internally
-     * without halting the execution of other suites.
-     *
-     * The `queue` ensures that execution tasks are managed per runner, preventing
-     * race conditions and allowing controlled concurrency.
-     *
-     * After all tasks are queued, the queue is started and the method waits
-     * for all execution tasks to settle using `Promise.allSettled`.
-     *
-     * @example
-     * ```ts
-     * await externalService.executeSuites(transpileFiles, originalFiles);
-     * ```
-     *
-     * @see {@link setSuites} to register suites for execution.
-     * @see {@link executeTestWithErrorHandling} for individual test execution logic.
-     *
-     * @since 1.0.0
-     */
-
-    async executeSuites(transpileSuites: TranspileFileType, suites: Record<string, string>): Promise<void> {
-        this.setSuites(suites);
-        const testExecutionTasks: Array<Promise<void>> = [];
-
-        for (const transpile of transpileSuites) {
-            const relativePath = relative(this.framework.rootPath, transpile.path)
-                .replace(/\.[^/.]+$/, '');
-
-            this.runners.forEach((runner: TestRunnerInterface, id: string) => {
-                testExecutionTasks.push(this.queue.enqueue(async () => {
-                    return this.executeTestWithErrorHandling(transpile.code, relativePath, runner);
-                }, id));
-            });
-        }
-
+    startQueue(suites: Record<string, string>): void {
         this.queue.start();
-        await Promise.allSettled(testExecutionTasks);
+        this.setSuites(suites);
+    }
+
+    executeSuites(transpileSuite: TranspileFileInterface): Array<Promise<void>> {
+        const testExecutionTasks: Array<Promise<void>> = [];
+        const relativePath = relative(this.framework.rootPath, transpileSuite.path)
+            .replace(/\.[^/.]+$/, '');
+
+        this.runners.forEach((runner: TestRunnerInterface, id: string) => {
+            const task =  this.executeTestWithErrorHandling(transpileSuite.code, relativePath, runner);
+            testExecutionTasks.push(this.queue.enqueue(task, id));
+        });
+
+        return testExecutionTasks;
     }
 
     /**

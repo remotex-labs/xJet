@@ -45,5 +45,6 @@ export const enum MessageType {
     Test = 1,
     Describe = 2,
     EndSuite = 3,
-    StartSuite = 4
+    StartSuite = 4,
+    CompileSuite = 5
 }
