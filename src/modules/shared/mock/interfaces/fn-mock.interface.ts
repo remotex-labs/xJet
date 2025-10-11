@@ -38,12 +38,15 @@ export interface MockableFunctionInterface<F extends FunctionType> extends MockS
 
 /**
  * Makes properties of a type or its resolved promise value optional.
+ * Converts `never` to `void` to avoid unassignable types.
  *
  * @template T - The type to transform
  *
  * @remarks
- * If T is a Promise-like type, this utility unwraps it and makes the resolved value's
- * properties optional. Otherwise, it directly makes T's properties optional.
+ * If `T` is a `PromiseLike` type, this utility unwraps it and makes the resolved value's
+ * properties optional.
+ * If `T` is `never`, it is converted to `void`.
+ * Otherwise, it directly makes `T`'s properties optional.
  *
  * @example
  * ```ts
@@ -52,10 +55,16 @@ export interface MockableFunctionInterface<F extends FunctionType> extends MockS
  *
  * // Makes properties of resolved User optional
  * type MaybeAsyncUser = PartialResolvedType<Promise<User>>;
+ *
+ * // Never becomes void
+ * type MaybeNever = PartialResolvedType<never>; // void
  * ```
  *
  * @since 1.2.2
  */
 
 export type PartialResolvedType<T> =
-    T extends PromiseLike<infer U> ? Promise<Partial<U>> : Partial<T>;
+    [ T ] extends [ never ]
+        ? void : T extends PromiseLike<infer U>
+            ? Promise<Partial<U>>
+            : Partial<T>;
