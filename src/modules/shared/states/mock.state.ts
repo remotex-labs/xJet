@@ -3,9 +3,9 @@
  */
 
 import type { FunctionType } from '@remotex-labs/xjet-expect';
+import type { PromiseValueType } from '@shared/states/interfaces/mock-state.interface';
 import type { BoundInterface } from '@shared/components/interfaces/polyfill-component.interface';
 import type { MockInvocationResultInterface } from '@shared/states/interfaces/mock-state.interface';
-import type { RejectedValueType, ResolvedValueType } from '@shared/states/interfaces/mock-state.interface';
 import type { ImplementationType, MocksStateInterface } from '@shared/states/interfaces/mock-state.interface';
 
 /**
@@ -636,7 +636,7 @@ export class MockState<F extends FunctionType = FunctionType> extends Function {
      * @since 1.0.0
      */
 
-    mockResolvedValue(value: ResolvedValueType<ReturnType<F>>): this {
+    mockResolvedValue(value: PromiseValueType<ReturnType<F>>): this {
         this.mockImplementation(() => <ReturnType<F>> Promise.resolve(value));
 
         return this;
@@ -676,7 +676,7 @@ export class MockState<F extends FunctionType = FunctionType> extends Function {
      * @since 1.0.0
      */
 
-    mockResolvedValueOnce(value: ResolvedValueType<ReturnType<F>>): this {
+    mockResolvedValueOnce(value: PromiseValueType<ReturnType<F>>): this {
         this.mockImplementationOnce(() => <ReturnType<F>> Promise.resolve(value));
 
         return this;
@@ -719,7 +719,7 @@ export class MockState<F extends FunctionType = FunctionType> extends Function {
      * @since 1.0.0
      */
 
-    mockRejectedValue(value: RejectedValueType<ReturnType<F>>): this {
+    mockRejectedValue(value: PromiseValueType<ReturnType<F>>): this {
         this.mockImplementation(() => <ReturnType<F>> Promise.reject(value));
 
         return this;
@@ -761,7 +761,7 @@ export class MockState<F extends FunctionType = FunctionType> extends Function {
      * @since 1.0.0
      */
 
-    mockRejectedValueOnce(value: RejectedValueType<ReturnType<F>>): this {
+    mockRejectedValueOnce(value: PromiseValueType<ReturnType<F>>): this {
         this.mockImplementationOnce(() => <ReturnType<F>> Promise.reject(value));
 
         return this;
