@@ -182,5 +182,5 @@ export type PromiseValueType<T> = T | (T extends PromiseLike<infer U> ? U | T : 
  */
 
 export type ImplementationType<F extends FunctionType> =
-    FunctionLikeType<ReturnType<F>, Parameters<F>, ThisParameterType<F>>
+    FunctionLikeType<PromiseValueType<ReturnType<F>>, Parameters<F>, ThisParameterType<F>>
 
