@@ -322,7 +322,7 @@ export function spyOnImplementation<T extends Record<string | symbol, unknown>, 
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
 
     if (typeof method !== 'function' || descriptor?.get)
-        return mockDescriptorProperty(target, key);
+        return mockDescriptorProperty(parent, key);
 
     let fn: FunctionLikeType = method as FunctionLikeType;
     const protoDesc = Object.getOwnPropertyDescriptor(fn, 'prototype');
