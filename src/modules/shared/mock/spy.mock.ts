@@ -308,7 +308,7 @@ export function spyOnImplementation<T extends Record<string | symbol, unknown>, 
     if (prop === null)
         throw new ExecutionError('Spied property/method key is required');
 
-    const method = <MockState & T[K]> Reflect.get(target, prop);
+    let method = <MockState & T[K]> Reflect.get(target, prop);
     if(method?.xJetMock) return method;
 
     if (isProxyProperty(target, prop))
@@ -318,14 +318,16 @@ export function spyOnImplementation<T extends Record<string | symbol, unknown>, 
     if (!(key in parent))
         throw new ExecutionError(`Property/method '${ String(key) }' does not exist on target`);
 
+    method = <MockState & T[K]> Reflect.get(parent, prop);
     if (!method) throw new Error(`Property '${ String(key) }' does not exist in the provided object`);
-    const descriptor = Object.getOwnPropertyDescriptor(target, key);
+    const descriptor = Object.getOwnPropertyDescriptor(parent, key);
 
     if (typeof method !== 'function' || descriptor?.get)
         return mockDescriptorProperty(parent, key);
 
     let fn: FunctionLikeType = method as FunctionLikeType;
     const protoDesc = Object.getOwnPropertyDescriptor(fn, 'prototype');
+
     if (fn.prototype && protoDesc && !protoDesc.writable) {
         fn = (...args: unknown[]): unknown =>
             new (method as ConstructorLikeType<unknown, unknown[]>)(...args);
@@ -336,7 +338,7 @@ export function spyOnImplementation<T extends Record<string | symbol, unknown>, 
     }, `xJet.spyOn(${ String(method.name) })`);
 
     MockState.mocks.add(new WeakRef(mockState));
-    Reflect.set(target, key, mockState);
+    Reflect.set(parent, key, mockState);
 
     return mockState;
 }
