@@ -25,6 +25,9 @@ import { ConsoleReporter } from '@messages/reports/console.report';
 /**
  * Transpiles a reporter file into a CommonJS module.
  *
+ * @param reporterPath - Path to the reporter file to transpile
+ * @returns A promise that resolves to a {@link TranspileFileInterface} containing the transpiled file
+ *
  * @remarks
  * Uses the `transpileFile` utility with predefined options:
  * - `minify: false`
@@ -32,9 +35,6 @@ import { ConsoleReporter } from '@messages/reports/console.report';
  * - `platform: 'node'`
  * - `logLevel: 'silent'`
  * - `packages: 'external'`
- *
- * @param reporterPath - Path to the reporter file to transpile
- * @returns A promise that resolves to a {@link TranspileFileInterface} containing the transpiled file
  *
  * @see TranspileFileInterface
  * @since 1.0.0
@@ -53,15 +53,15 @@ export async function transpile(reporterPath: string): Promise<TranspileFileInte
 /**
  * Loads and parses an external reporter file.
  *
- * @remarks
- * This function first transpiles the reporter using {@link transpile} and then executes it
- * in a sandboxed environment. The module's default export is expected to be a subclass of {@link AbstractReporter}.
- * Throws a {@link VMRuntimeError} if execution fails.
- *
  * @param reporterPath - Path to the external reporter file
  * @returns A promise that resolves to the reporter constructor ({@link ReporterConstructorType}) if successful, otherwise `undefined`
  *
  * @throws VMRuntimeError - If an error occurs during sandboxed execution
+ *
+ * @remarks
+ * This function first transpiles the reporter using {@link transpile} and then executes it
+ * in a sandboxed environment. The module's default export is expected to be a subclass of {@link AbstractReporter}.
+ * Throws a {@link VMRuntimeError} if execution fails.
  *
  * @see transpile
  * @see ReporterConstructorType
@@ -88,17 +88,17 @@ export async function parseExternalReporter(reporterPath: string): Promise<Repor
 /**
  * Retrieves a reporter instance based on the provided configuration.
  *
- * @remarks
- * This function supports both built-in and custom external reporters:
- * - Built-in reporters: `json`, `junit`, `default` (console).
- * - Custom reporters: dynamically loaded via {@link parseExternalReporter}.
- * The reporter is instantiated with `LogLevel.Debug` and an optional output file path.
- *
  * @param config - Configuration object containing reporter settings
  * @returns A promise that resolves to an {@link AbstractReporter} instance
  *
  * @throws xJetError - If the reporter path does not export a valid reporter class
  * @throws VMRuntimeError - If instantiation of a custom reporter fails
+ *
+ * @remarks
+ * This function supports both built-in and custom external reporters:
+ * - Built-in reporters: `json`, `junit`, `default` (console).
+ * - Custom reporters: dynamically loaded via {@link parseExternalReporter}.
+ * The reporter is instantiated with `LogLevel.Debug` and an optional output file path.
  *
  * @see LogLevel
  * @see AbstractReporter
