@@ -52,14 +52,20 @@ export function deepSearchObject(
 ): DeepSearchInterface | null {
     const visited = new WeakSet<object>();
 
-    function search(target: Record<string | symbol, unknown>, depth: number): DeepSearchInterface | null {
-        if (depth > maxDepth || target == null || (typeof target !== 'object' && typeof target !== 'function')) return null;
-        if (visited.has(target)) return null;
-        visited.add(target);
+    function search(current: Record<string | symbol, unknown>, depth: number): DeepSearchInterface | null {
+        if (depth > maxDepth || current == null) return null;
+        if (typeof current !== 'object' && typeof current !== 'function') return null;
+        if (visited.has(current)) return null;
+        visited.add(current);
 
-        if (key && key in target) return { parent: target, key };
-        for (const [ prop, value ] of Object.entries(target)) {
-            if (Object.is(value, element)) return { parent: target, key: prop };
+        if (element === null && key && key in current)
+            return { parent: current, key };
+
+        if (key && key in current && Object.is(current[key], element))
+            return { parent: current, key };
+
+        for (const [ prop, value ] of Object.entries(current)) {
+            if (Object.is(value, element)) return { parent: current, key: prop };
             if (value && (typeof value === 'object' || typeof value === 'function')) {
                 const found = search(value as Record<string | symbol, unknown>, depth + 1);
                 if (found) return found;
