@@ -867,7 +867,13 @@ export class MockState<F extends FunctionType = FunctionType> extends Function {
                 const value = impl.call(<ThisParameterType<F>> thisArg, ...args);
                 result = { type: 'return', value };
             } catch (error) {
-                result = { value: error, type: 'throw' };
+                this.state.results[index] = {
+                    type: 'throw',
+                    value: error
+                };
+
+                this.state.lastCall = args;
+                throw error;
             }
         } else {
             result = { type: 'return', value: undefined };

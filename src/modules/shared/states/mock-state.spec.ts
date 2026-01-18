@@ -85,11 +85,12 @@ describe('MockState Class', () => {
     });
 
     test('should implementation result return throw error', () => {
+        const error = new Error('Test error');
         const mockState = new MockState(() => {
-            throw new Error('Test error');
+            throw error;
         });
 
-        expect(mockState()).toEqual(new Error('Test error'));
+        expect(() => mockState()).toThrow(error);
         expect(mockState.mock.results[0]).toEqual({ type: 'throw', value: new Error('Test error') });
     });
 
@@ -224,7 +225,7 @@ describe('MockState Class', () => {
             throw errorInstance;
         }));
 
-        expect(new mockState()).toBe(errorInstance);
+        expect(() => new mockState()).toThrow(errorInstance);
         expect(mockState.mock.results[0]).toEqual({ type: 'throw', value: errorInstance });
     });
 
