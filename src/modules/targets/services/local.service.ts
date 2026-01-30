@@ -12,7 +12,7 @@ import type { ModuleInterface, TranspileFileType } from '@services/interfaces/tr
 import * as process from 'process';
 import { pathToFileURL } from 'url';
 import { createRequire } from 'module';
-import { dirname, relative } from 'path';
+import { dirname, relative, resolve } from 'path';
 import { sandboxExecute } from '@services/vm.service';
 import { serializeError } from '@remotex-labs/xjet-expect';
 import { Injectable } from '@symlinks/services/inject.service';
@@ -198,10 +198,13 @@ export class LocalService extends AbstractTarget {
             clearInterval,
             process: safeProcess,
             dispatch: this.dispatch.bind(this),
-            import_meta: pathToFileURL(path),
-
             __dirname: dirname(path),
             __filename: path,
+            import_meta: {
+                url: pathToFileURL(path),
+                dirname: dirname(resolve(path)),
+                filename: path
+            },
             __XJET: {
                 runtime: {
                     bail: this.config.bail,
