@@ -189,6 +189,7 @@ export class LocalService extends AbstractTarget {
         });
 
         const sandboxContext = {
+            ...globalThis,
             Buffer,
             module,
             require,
