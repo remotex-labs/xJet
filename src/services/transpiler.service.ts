@@ -122,7 +122,7 @@ export async function transpileFiles(filePaths: BuildOptions['entryPoints'], bui
         } else if (isJsFile) {
             transpiled.push({
                 path: basePath,
-                code: file.text + `//# sourceURL=${ basePath }`
+                code: file.text
             });
         }
     }
