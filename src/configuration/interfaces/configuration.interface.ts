@@ -65,12 +65,13 @@ export interface TestRunnerInterface {
      *
      * @param suite - The compiled JavaScript test suite as a binary buffer.
      * @param suiteId - A unique identifier for the test suite.
+     * @param path - The test file path (relative to the project root).
      * @returns A promise that resolves once the suite has been successfully dispatched.
      *
      * @since 1.0.0
      */
 
-    dispatch(suite: Buffer, suiteId: string): Promise<void> | void;
+    dispatch(suite: Buffer, suiteId: string, path: string): Promise<void> | void;
 
     /**
      * Establishes a communication channel with the runner to receive results.
