@@ -2,7 +2,7 @@
  * Import will remove at compile time
  */
 
-import type { Dirent } from '@humanfs/node';
+import type { Dirent } from 'fs';
 import type { ConfigurationInterface } from '@configuration/interfaces/configuration.interface';
 
 /**

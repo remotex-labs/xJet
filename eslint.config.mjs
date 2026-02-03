@@ -107,12 +107,12 @@ export default defineConfig([
 
                     groups: [
                         'type',
+                        'style',
                         [
                             'internal', 'parent',
                             'sibling', 'index',
                             'builtin', 'external'
-                        ],
-                        'object'
+                        ]
                     ]
                 }
             ],
@@ -210,7 +210,7 @@ export default defineConfig([
         }
     },
     {
-        files: [ '**/*.d.ts' ],
+        files: [ '**/*.d.ts', 'src/banner.ts' ],
         rules: {
             'no-var': 'off'
         }
