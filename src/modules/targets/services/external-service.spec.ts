@@ -194,7 +194,8 @@ describe('ExternalService', () => {
 
             expect(runner.dispatch).toHaveBeenCalledWith(
                 expect.any(Buffer),
-                '123'
+                '123',
+                'real.js'
             );
             expect(withTimeout).toHaveBeenCalled();
         });

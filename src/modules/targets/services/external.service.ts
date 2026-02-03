@@ -385,7 +385,7 @@ export class ExternalService extends AbstractTarget {
 
         const preparedTestCode = this.prepareTestCodeWithContext(testCode, runtimeContext);
         await withTimeout(
-            runner?.dispatch?.(Buffer.from(preparedTestCode), suiteId),
+            runner?.dispatch?.(Buffer.from(preparedTestCode), suiteId, this.suites.get(suiteId)!),
             runner?.dispatchTimeout ?? 5000,
             `dispatch of runner "${ runner.name }"`
         );
