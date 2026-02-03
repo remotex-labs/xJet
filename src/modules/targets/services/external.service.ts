@@ -421,8 +421,8 @@ export class ExternalService extends AbstractTarget {
         const __dirname = dirname(__filename);
 
         return `globalThis.import_meta = { url: "${ pathToFileURL(__filename) }", dirname: "${ __dirname }", filename: "${ __filename }" };` +
-            `__dirname=${ JSON.stringify(__dirname) };` +
-            `__filename=${ JSON.stringify(__filename) };` +
+            `globalThis.__dirname=${ JSON.stringify(__dirname) };` +
+            `globalThis.__filename=${ JSON.stringify(__filename) };` +
             `globalThis.__XJET = ${ JSON.stringify(context) }; ${ testCode }`;
     }
 }
