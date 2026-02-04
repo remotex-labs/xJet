@@ -71,7 +71,7 @@ describe('ESBuild helpers', () => {
             const result = await transpileFiles([ 'entry.ts' ]);
 
             expect(mockFramework.setSource).toHaveBeenCalledWith('map1', 'a.js');
-            expect(result).toEqual([{ path: 'a.js', code: 'code1' }]);
+            expect(result).toEqual([{ path: 'a.js', code: 'code1//# sourceURL=a.js' }]);
         });
     });
 
@@ -83,7 +83,7 @@ describe('ESBuild helpers', () => {
             (build as jest.Mock).mockResolvedValue(mockBuildResult);
 
             const result = await transpileFile('entry.ts');
-            expect(result).toEqual({ path: 'a.js', code: 'code1' });
+            expect(result).toEqual({ path: 'a.js', code: 'code1//# sourceURL=a.js' });
         });
 
         test('should throw xJetError if no output generated', async () => {
