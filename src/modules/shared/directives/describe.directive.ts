@@ -102,8 +102,8 @@ export class DescribeDirective extends Function {
     private constructor() {
         super();
 
-        return <this>new Proxy(this, {
-            apply(target, thisArg, args: [ string, FunctionType ]): void {
+        return <this> new Proxy(this, {
+            apply(target, _, args: [ string, FunctionType ]): void {
                 target.invoke(args[0], args[1]);
             }
         });
@@ -124,7 +124,7 @@ export class DescribeDirective extends Function {
 
     static getInstance(): DescribeDirectiveInterface {
         if (!DescribeDirective.instance) {
-            DescribeDirective.instance = <DescribeDirectiveInterface><unknown>new DescribeDirective();
+            DescribeDirective.instance = <DescribeDirectiveInterface> <unknown> new DescribeDirective();
         }
 
         return DescribeDirective.instance;
