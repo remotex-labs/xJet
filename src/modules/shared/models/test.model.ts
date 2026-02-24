@@ -414,7 +414,7 @@ export class TestModel {
         switch (strategy) {
             case TestExecutionType.ASYNC:
             case TestExecutionType.SYNC:
-                await this.testImplementation.call(context, this.testParameters);
+                await this.testImplementation.apply(context, this.testParameters);
                 break;
             case TestExecutionType.CALLBACK:
                 await this.executeCallbackStyleTest(context);
