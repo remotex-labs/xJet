@@ -94,7 +94,7 @@ export function parseTemplate(templateString: TemplateStringsArray, inputData: A
  * test.each(
  *     { name: 'John', age: 30 },
  *     { name: 'Jane', age: 25 }
- * )('User %s is %s years old', (name, age) => {
+ * )('User %s is %s years old', ({ name, age }) => {
  *     expect(typeof name).toBe('string');
  *     expect(typeof age).toBe('number');
  * });
