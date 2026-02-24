@@ -414,7 +414,7 @@ export class TestModel {
         switch (strategy) {
             case TestExecutionType.ASYNC:
             case TestExecutionType.SYNC:
-                await this.testImplementation.apply(context, this.testParameters);
+                await this.testImplementation.call(context, this.testParameters);
                 break;
             case TestExecutionType.CALLBACK:
                 await this.executeCallbackStyleTest(context);
@@ -453,8 +453,7 @@ export class TestModel {
                 resolve();
             };
 
-            const allParameters = [ ...this.testParameters ];
-            allParameters.push(callbackFn);
+            const allParameters = [ this.testParameters, callbackFn ];
 
             this.testImplementation.apply(context, allParameters);
         });
