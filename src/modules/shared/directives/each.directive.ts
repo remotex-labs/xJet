@@ -133,7 +133,7 @@ export function each<T extends Array<unknown>>(executor: InvokeType, ...args: T)
 
     return (name: string, blockFn: FunctionType, timeout?: number): void => {
         cases.forEach((testCase, index) => {
-            const parseArgs = Array.isArray(testCase) ? testCase : [ testCase ];
+            const parseArgs = [ testCase ];
             executor(printf(name, parseArgs, Number(index)), blockFn, parseArgs, timeout);
         });
     };
