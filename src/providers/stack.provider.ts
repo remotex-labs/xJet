@@ -2,6 +2,8 @@
  * Import will remove at compile time
  */
 
+import type { StackFrameInterface } from '@remotex-labs/xmap/parser.component';
+import type { PositionWithCodeInterface, SourceOptionsInterface } from '@remotex-labs/xmap';
 import type { StackInterface, StackContextInterface } from '@providers/interfaces/stack-provider.interface';
 import type { StackMetadataInterface, StackTraceInterface } from '@providers/interfaces/stack-provider.interface';
 
@@ -9,14 +11,14 @@ import type { StackMetadataInterface, StackTraceInterface } from '@providers/int
  * Imports
  */
 
+import { Bias } from '@remotex-labs/xmap';
 import { dirname, join, relative } from 'path';
 import { inject } from '@symlinks/symlinks.module';
 import { xterm } from '@remotex-labs/xansi/xterm.component';
 import { FrameworkService } from '@services/framework.service';
-import { Bias, type SourceOptionsInterface } from '@remotex-labs/xmap';
+import { parseErrorStack } from '@remotex-labs/xmap/parser.component';
+import { formatErrorCode } from '@remotex-labs/xmap/formatter.component';
 import { highlightCode } from '@remotex-labs/xmap/highlighter.component';
-import { parseErrorStack, type StackFrameInterface } from '@remotex-labs/xmap/parser.component';
-import { formatErrorCode, type PositionWithCodeInterface } from '@remotex-labs/xmap/formatter.component';
 
 /**
  * Regular expression to match multiple consecutive spaces.

@@ -59,7 +59,6 @@ export async function parseConfigurationFile(file: string): Promise<Configuratio
         logLevel: 'silent',
         packages: 'external',
         minifySyntax: true,
-        preserveSymlinks: true,
         minifyWhitespace: true,
         minifyIdentifiers: false
     };

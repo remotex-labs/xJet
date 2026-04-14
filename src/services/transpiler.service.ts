@@ -38,8 +38,7 @@ export const defaultBuildOptions: BuildOptions = {
     platform: 'browser',
     sourcemap: 'external',
     mangleQuoted: true,
-    sourcesContent: true,
-    preserveSymlinks: true
+    sourcesContent: true
 };
 
 /**

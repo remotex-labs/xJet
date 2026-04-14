@@ -103,7 +103,7 @@ export class DescribeDirective extends Function {
         super();
 
         return <this>new Proxy(this, {
-            apply(target, thisArg, args: [ string, FunctionType ]): void {
+            apply(target, _, args: [ string, FunctionType ]): void {
                 target.invoke(args[0], args[1]);
             }
         });
