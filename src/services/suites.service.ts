@@ -313,7 +313,6 @@ export class SuitesService {
             logLevel: 'silent',
             sourcemap: true,
             minifySyntax: true,
-            preserveSymlinks: true,
             minifyWhitespace: true,
             minifyIdentifiers: false,
             define: {
