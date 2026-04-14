@@ -2,21 +2,21 @@ module.exports = {
     testEnvironment: 'node',
     transform: {
         '^.+\\.tsx?$': [
-            "@swc/jest",
+            '@swc/jest',
             {
                 jsc: {
                     parser: {
                         tsx: false,
-                        syntax: "typescript",
+                        syntax: 'typescript',
                         decorators: true
                     }
-                },
-            },
-        ],
+                }
+            }
+        ]
     },
     collectCoverageFrom: [
         'src/**/*.{ts,tsx,js,jsx}',
-        '!**/*.d.ts',
+        '!**/*.d.ts'
     ],
     testPathIgnorePatterns: [ '/lib/', '/node_modules/', '/dist/' ],
     moduleNameMapper: {
@@ -31,5 +31,5 @@ module.exports = {
         '^@symlinks/(.*)$': '<rootDir>/src/modules/symlinks/$1',
         '^@messages/(.*)$': '<rootDir>/src/modules/messages/$1',
         '^@configuration/(.*)$': '<rootDir>/src/configuration/$1'
-    },
+    }
 };
