@@ -1,18 +1,19 @@
 {
     "extends": "./tsconfig.json",
     "compilerOptions": {
+        "composite": true,
         "types": [
             "node",
-            "jest"
+            "@remotex-labs/xjet"
         ]
     },
     "include": [
         "**/*.ts",
-        "**/*.spec.ts",
-        "includes/**/*"
+        "**/*.spec.ts"
     ],
     "exclude": [
         "dist",
-        "node_modules"
+        "node_modules",
+        "config.xbuild.ts"
     ]
 }

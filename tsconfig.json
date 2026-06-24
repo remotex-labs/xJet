@@ -3,19 +3,17 @@
         "strict": true,
         "target": "ESNext",
         "module": "ESNext",
-        "baseUrl": ".",
         "outDir": "dist",
         "rootDir": "src",
+        "composite": false,
         "declaration": true,
         "skipLibCheck": true,
-        "importHelpers": false,
-        "isolatedModules": false,
-        "esModuleInterop": false,
+        "esModuleInterop": true,
+        "isolatedModules": true,
         "moduleDetection": "force",
         "moduleResolution": "bundler",
         "resolveJsonModule": true,
-        "allowSyntheticDefaultImports": true,
-        "forceConsistentCasingInFileNames": true,
+        "emitDeclarationOnly": true,
         "lib": [
             "esnext"
         ],
@@ -24,37 +22,37 @@
         ],
         "paths": {
             "@errors/*": [
-                "src/errors/*"
+                "./src/errors/*"
             ],
             "@services/*": [
-                "src/services/*"
+                "./src/services/*"
             ],
             "@providers/*": [
-                "src/providers/*"
+                "./src/providers/*"
             ],
             "@components/*": [
-                "src/components/*"
+                "./src/components/*"
             ],
             "@shared/*": [
-                "src/modules/shared/*"
+                "./src/modules/shared/*"
             ],
             "@targets/*": [
-                "src/modules/targets/*"
+                "./src/modules/targets/*"
             ],
             "@reports/*": [
-                "src/modules/reports/*"
+                "./src/modules/reports/*"
             ],
             "@packets/*": [
-                "src/modules/packets/*"
+                "./src/modules/packets/*"
             ],
             "@symlinks/*": [
-                "src/modules/symlinks/*"
+                "./src/modules/symlinks/*"
             ],
             "@messages/*": [
-                "src/modules/messages/*"
+                "./src/modules/messages/*"
             ],
             "@configuration/*": [
-                "src/configuration/*"
+                "./src/configuration/*"
             ]
         }
     },
@@ -67,5 +65,8 @@
         "dist",
         "**/*.spec.ts",
         "node_modules"
+    ],
+    "references": [
+        { "path": "./tsconfig.spec.json" }
     ]
 }
