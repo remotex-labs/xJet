@@ -6,23 +6,28 @@ labels: [ "bug", "needs triage" ]
 ---
 
 **Describe the bug**
-A clear and concise description of what the bug is.
+
+A clear and concise description of what is wrong.
 
 **Reproduction**
 
-```typescript
-// Minimal code that reproduces the issue
+A minimal test and the code that triggers the problem.
+
+```ts
 import {} from '@remotex-labs/xjet';
+
+// Minimal code that reproduces the issue
 ```
 
 **Expected behavior**
+
 What you expected to happen.
 
 **Actual behavior**
-What actually happened. 
-Include the full error message and stack trace if applicable.
 
-```
+What actually happened. Include the full error message and stack trace if there is one.
+
+```text
 Error: ...
     at ...
 ```
@@ -32,12 +37,12 @@ Error: ...
 |                              | |
 |------------------------------|-|
 | `@remotex-labs/xjet` version | |
-| OS                           | |
-| Bundler                      | |
 | Node.js version              | |
+| TypeScript version           | |
+| OS                           | |
 
 **Checklist**
 
-- [ ] I have searched for existing issues, and this is not a duplicate
-- [ ] I am using the latest published version
-- [ ] I have included a minimal reproduction above
+- [ ] I have searched for existing issues, and this is not a duplicate.
+- [ ] I am using the latest published version.
+- [ ] I have included a minimal reproduction above.

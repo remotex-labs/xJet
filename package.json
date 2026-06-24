@@ -47,8 +47,8 @@
         "build":            "xBuild",
         "build:clean":      "rm -rf ./dist && xBuild",
 
-        "test":             "jest",
-        "test:coverage":    "jest --coverage",
+        "test":             "xjet",
+        "test:coverage":    "xjet --coverage",
 
         "lint":             "pnpm lint:md && pnpm lint:eslint && pnpm lint:typescript",
         "lint:md":          "markdownlint \"**/*.md\" --ignore node_modules",
@@ -57,10 +57,7 @@
 
         "docs:dev":         "vitepress dev docs",
         "docs:build":       "vitepress build docs",
-        "docs:preview":     "vitepress preview docs",
-
-        "ci":              "pnpm lint && pnpm test && pnpm build:clean",
-        "prepublishOnly":  "pnpm lint && pnpm test && pnpm build:clean"
+        "docs:preview":     "vitepress preview docs"
     },
     "devDependencies": {
         "eslint": "^10.5.0",
