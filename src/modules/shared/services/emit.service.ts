@@ -9,6 +9,7 @@ import type { EmitEventInterface, EmitStatusInterface } from '@shared/services/i
  * Imports
  */
 
+import { encodeJSON } from '@components/object.component';
 import { serializeError } from '@remotex-labs/xjet-expect';
 import { encodePacket, PacketKind } from '@packets/packets.module';
 
@@ -69,7 +70,7 @@ export function emitEvent(type: MessageType, notification: EmitEventInterface): 
 
     dispatch(encodePacket(PacketKind.Events, {
         type: type,
-        errors: stringErrors.length > 0 ? JSON.stringify(stringErrors) : '',
+        errors: stringErrors.length > 0 ? encodeJSON(stringErrors) : '',
         ancestry: notification.ancestry.join(''),
         duration: notification.duration,
         description: notification.description

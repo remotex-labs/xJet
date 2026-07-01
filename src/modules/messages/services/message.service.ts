@@ -16,6 +16,7 @@ import type { StartAssertionMessageInterface, StartMessageInterface } from '@mes
  * Imports
  */
 
+import { decodeJSON } from '@components/object.component';
 import { stackMetadata } from '@providers/stack.provider';
 import { inject } from '@symlinks/services/inject.service';
 import { FrameworkService } from '@services/framework.service';
@@ -302,7 +303,7 @@ export class MessageService {
 
     private decodeError(error: string, options: StackTraceInterface = {}): SuiteErrorInterface | Array<SuiteErrorInterface> {
         try {
-            const errorObject: ErrorType = JSON.parse(error);
+            const errorObject: ErrorType = decodeJSON(error);
             if (Array.isArray(errorObject)) {
                 return errorObject.map(err => {
                     return this.structuredError(
