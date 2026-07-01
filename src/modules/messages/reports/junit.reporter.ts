@@ -59,8 +59,11 @@ export class JunitReporter extends JsonReporter {
      *
      * @remarks
      * This method constructs the complete JUnit XML document from the collected test results.
-     * It iterates over all test runners and their suites, converts them into XML format,
-     * and appends them to the internal `xmlParts` array. After building the full XML:
+     * It first aggregates the totals (tests, failures, skipped, time) across every runner and
+     * suite, emits a single root `<testsuites>` element carrying those totals, then appends one
+     * `<testsuite>` per suite. Suites from different runners are distinguished by the standard
+     * `package` attribute rather than nested `<testsuites>` elements, keeping the output valid for
+     * CI parsers while still supporting multiple runners. After building the full XML:
      * - If `outFilePath` is defined, the XML is written to the specified file.
      * - The XML is also logged to the console.
      *
@@ -73,15 +76,34 @@ export class JunitReporter extends JsonReporter {
      */
 
     finish(): void {
-        this.xmlParts.push('<testsuites>');
-        Object.entries(this.testResults).forEach(([ runnerName, suitesByName ]) => {
-            this.xmlParts.push(`<testsuites name="${ runnerName }">`);
+        const runners = Object.entries(this.testResults);
 
+        let totalTests = 0;
+        let totalFailures = 0;
+        let totalSkipped = 0;
+        let totalDuration = 0;
+
+        runners.forEach(([ , suitesByName ]) => {
             Object.values(suitesByName).forEach(suite => {
-                this.convertSuiteToXml(suite);
+                totalTests += this.countTests(suite.rootDescribe);
+                totalFailures += this.countFailures(suite.rootDescribe);
+                totalSkipped += this.countSkipped(suite.rootDescribe);
+                totalDuration += suite.duration ?? 0;
             });
+        });
 
-            this.xmlParts.push('</testsuites>');
+        const rootAttrs = [
+            `tests="${ totalTests }"`,
+            `failures="${ totalFailures }"`,
+            `skipped="${ totalSkipped }"`,
+            `time="${ this.formatDuration(totalDuration) }"`
+        ].join(' ');
+
+        this.xmlParts.push(`<testsuites ${ rootAttrs }>`);
+        runners.forEach(([ runnerName, suitesByName ]) => {
+            Object.values(suitesByName).forEach(suite => {
+                this.convertSuiteToXml(suite, runnerName);
+            });
         });
 
         this.xmlParts.push('</testsuites>');
@@ -99,6 +121,7 @@ export class JunitReporter extends JsonReporter {
      * Converts a test suite into a JUnit `<testsuite>` XML element and appends it to `xmlParts`.
      *
      * @param suite - The test suite to convert to XML.
+     * @param runnerName - The name of the runner that produced the suite, emitted as the `package` attribute.
      *
      * @remarks
      * This method calculates the total number of tests, failures, skipped tests, and the suite duration.
@@ -115,7 +138,7 @@ export class JunitReporter extends JsonReporter {
      * @since 1.0.0
      */
 
-    private convertSuiteToXml(suite: JsonSuiteInterface): void {
+    private convertSuiteToXml(suite: JsonSuiteInterface, runnerName: string): void {
         const rootDescribe = suite.rootDescribe;
         const tests = this.countTests(rootDescribe);
         const failures = this.countFailures(rootDescribe);
@@ -123,7 +146,8 @@ export class JunitReporter extends JsonReporter {
         const duration = this.formatDuration(suite.duration);
 
         const suiteAttrs = [
-            `name="${ suite.suiteName }"`,
+            `name="${ this.escapeXml(suite.suiteName) }"`,
+            `package="${ this.escapeXml(runnerName) }"`,
             `tests="${ tests }"`,
             `failures="${ failures }"`,
             `skipped="${ skipped }"`,
