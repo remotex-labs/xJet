@@ -15,6 +15,7 @@ import type { JsonDescribeInterface, JsonSuiteInterface } from '@messages/report
 
 import { dirname } from 'path';
 import { mkdirSync, writeFileSync } from 'fs';
+import { encodeJSON } from '@components/object.component';
 import { AbstractReporter } from '@messages/abstract/report.abstract';
 
 /**
@@ -396,7 +397,7 @@ export class JsonReporter extends AbstractReporter {
      */
 
     finish(): void {
-        const result = JSON.stringify(this.testResults, null, 4);
+        const result = encodeJSON(this.testResults, 4);
         if(this.outFilePath) {
             const folderPath = dirname(this.outFilePath);
             mkdirSync(folderPath, { recursive: true });
