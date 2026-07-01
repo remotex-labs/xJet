@@ -1,0 +1,6 @@
+allowBuilds:
+  esbuild: false
+  '@swc/core': false
+  unrs-resolver: false
+minimumReleaseAgeExclude:
+  - '@remotex-labs/*'
